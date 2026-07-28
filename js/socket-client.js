@@ -36,7 +36,7 @@ const JudgementSocket = (() => {
         return;
       }
       mode = 'real';
-      const socket = window.io(serverUrl, { transports: ['websocket'], reconnectionAttempts: 3 });
+      const socket = window.io(serverUrl, { transports: ['polling', 'websocket'], reconnectionAttempts: 3 });
       backend = {
         on: (event, cb) => socket.on(event, cb),
         emit: (event, payload) => socket.emit(event, payload),
@@ -63,7 +63,7 @@ const JudgementSocket = (() => {
     }
     loadSocketIoScript((failed) => {
       if (failed || !window.io) return onResult([]);
-      const socket = window.io(serverUrl, { transports: ['websocket'], reconnectionAttempts: 2 });
+      const socket = window.io(serverUrl, { transports: ['polling', 'websocket'], reconnectionAttempts: 2 });
       socket.on('connect', () => socket.emit(JUDGEMENT_CONFIG.EVENTS.LOBBY_LIST_PUBLIC, {}));
       socket.on(JUDGEMENT_CONFIG.EVENTS.LOBBY_LIST_RESULT, ({ lobbies }) => { onResult(lobbies); socket.disconnect(); });
       socket.on('connect_error', () => onResult([]));

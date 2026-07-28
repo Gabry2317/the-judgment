@@ -5,6 +5,13 @@
 const JUDGEMENT_CONFIG = {
   DEFAULT_SERVER_URL: '', // vuoto = modalità demo locale (nessun server richiesto)
 
+  // Se il tuo server Debian pubblica il proprio indirizzo su un Gist GitHub
+  // (vedi backend/kitab/README.md, sezione Cloudflare Tunnel), incolla qui
+  // l'URL "raw" del file: il campo "server" si precompila da solo all'avvio.
+  // Lascia vuoto per configurare l'indirizzo a mano come prima.
+  // Esempio: 'https://gist.githubusercontent.com/tuoutente/xxxxx/raw/judgement-server.json'
+  SERVER_DISCOVERY_URL: '',
+
   TIMERS: {
     difesa: 90,   // secondi concessi per scrivere la difesa
     voto: 30,     // secondi concessi per votare
