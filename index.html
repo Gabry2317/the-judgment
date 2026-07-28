@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Judgement</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-brand">
+    <span class="mascot-slot" id="mascot-slot">
+      <img src="assets/images/logo-mascot.png" alt="" id="mascot-img" onerror="document.getElementById('mascot-img').style.display='none'; document.getElementById('mascot-fallback').style.display='block';">
+      <span id="mascot-fallback" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#2b3a55" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 10L4 20"/><path d="M18.5 2.5L21.5 5.5L15 12L12 9L18.5 2.5Z"/><path d="M2 22H10"/></svg>
+      </span>
+    </span>
+    <h1 class="masthead-title">The Judgement</h1>
+  </div>
+  <span class="masthead-eyebrow" id="connection-status">non connesso</span>
+</header>
+
+<main id="app">
+
+  <!-- VISTA: HOME / CONNESSIONE -->
+  <section class="view" id="view-home" data-view="home">
+    <div class="dossier">
+      <p class="dossier-label">Identificazione</p>
+      <label class="field">
+        <span>Il tuo nome</span>
+        <input type="text" id="input-nickname" maxlength="20" placeholder="es. Gabriele">
+      </label>
+      <label class="field">
+        <span>Server (indirizzo Kitab)</span>
+        <input type="text" id="input-server-url" placeholder="ws://tuo-server:3000">
+      </label>
+
+      <div class="tab-switch" role="tablist">
+        <button class="tab-btn active" id="tab-btn-create" data-tab="create">Crea tribunale</button>
+        <button class="tab-btn" id="tab-btn-join" data-tab="join">Entra in un tribunale</button>
+      </div>
+
+      <!-- Tab: crea -->
+      <div class="tab-panel" data-tab-panel="create">
+        <label class="switch-row" for="input-public-toggle">
+          <span>Lobby pubblica</span>
+          <span class="switch">
+            <input type="checkbox" id="input-public-toggle">
+            <span class="switch-track"></span>
+          </span>
+        </label>
+        <p class="hint">Una lobby pubblica compare nell'elenco che tutti possono cercare. Una privata si raggiunge solo con il codice.</p>
+        <div class="actions">
+          <button class="btn btn-primary" id="btn-create-lobby">Crea tribunale</button>
+        </div>
+      </div>
+
+      <!-- Tab: entra -->
+      <div class="tab-panel hidden" data-tab-panel="join">
+        <div class="tab-switch tab-switch-sub">
+          <button class="tab-btn active" id="subtab-btn-code" data-subtab="code">Ho un codice</button>
+          <button class="tab-btn" id="subtab-btn-public" data-subtab="public">Lobby pubbliche</button>
+        </div>
+
+        <div data-subtab-panel="code">
+          <label class="field">
+            <span>Codice tribunale</span>
+            <input type="text" id="input-join-code" maxlength="6" placeholder="ABC123" style="text-transform:uppercase">
+          </label>
+          <div class="actions">
+            <button class="btn btn-secondary" id="btn-join-code">Entra</button>
+          </div>
+        </div>
+
+        <div class="hidden" data-subtab-panel="public">
+          <div class="actions">
+            <button class="btn btn-secondary" id="btn-refresh-public">Aggiorna elenco</button>
+          </div>
+          <ul class="public-lobby-list" id="public-lobby-list"></ul>
+          <p class="hint hidden" id="public-lobby-empty">Nessuna lobby pubblica al momento. Prova ad aggiornare o crea la tua.</p>
+        </div>
+      </div>
+
+      <p class="hint" id="home-error"></p>
+    </div>
+  </section>
+
+  <!-- VISTA: LOBBY -->
+  <section class="view" id="view-lobby" data-view="lobby">
+    <div class="dossier">
+      <div class="hero-illustration">
+        <img src="assets/images/lobby-illustration.png" alt="" onerror="this.parentElement.style.display='none'">
+      </div>
+      <p class="dossier-label">In attesa &mdash; codice tribunale <strong id="lobby-code">------</strong></p>
+      <h2 class="section-title">Presenti in aula</h2>
+      <ul class="player-list" id="player-list"></ul>
+
+      <h2 class="section-title">Deposita un'accusa</h2>
+      <p class="hint">Puoi accusare chiunque, di qualsiasi cosa. Verrà assegnata a caso a un presente.</p>
+      <label class="field">
+        <span>Accusa</span>
+        <textarea id="input-accusa" maxlength="500" placeholder="Es. L'imputato ha mangiato l'ultima fetta di pizza senza avvisare nessuno..."></textarea>
+      </label>
+      <div class="actions">
+        <button class="btn btn-primary" id="btn-submit-accusa">Deposita accusa</button>
+      </div>
+      <ul class="pending-list" id="pending-accuse-list"></ul>
+    </div>
+  </section>
+
+  <!-- VISTA: PROCESSO -->
+  <section class="view" id="view-trial" data-view="trial">
+    <div class="dossier">
+      <p class="dossier-label">Fase: <span id="trial-phase-label">accusa</span> &mdash; <span id="trial-timer">--</span></p>
+
+      <div class="evidence-card evidence-accusa">
+        <p class="evidence-label">Accusa contro <strong id="trial-imputato-name">-</strong></p>
+        <p class="evidence-body" id="trial-accusa-text">-</p>
+        <p class="evidence-footer">depositata da <span id="trial-accusatore-name">-</span></p>
+      </div>
+
+      <!-- Sotto-vista: scrittura difesa (visibile solo all'imputato) -->
+      <div id="defense-writer" class="hidden">
+        <h2 class="section-title">La tua difesa</h2>
+        <label class="field">
+          <textarea id="input-difesa" maxlength="800" placeholder="Scrivi qui la tua difesa..."></textarea>
+        </label>
+        <div class="actions">
+          <button class="btn btn-primary" id="btn-submit-difesa">Presenta la difesa</button>
+        </div>
+      </div>
+
+      <!-- Sotto-vista: attesa difesa (visibile agli altri) -->
+      <div id="defense-waiting" class="hidden">
+        <p class="hint typing-indicator">L'imputato sta scrivendo la propria difesa<span class="dots"><span>.</span><span>.</span><span>.</span></span></p>
+      </div>
+
+      <!-- Evidenza: difesa mostrata dopo la sottomissione -->
+      <div class="evidence-card evidence-difesa hidden" id="evidence-difesa-card">
+        <p class="evidence-label">Difesa dell'imputato</p>
+        <p class="evidence-body" id="trial-difesa-text">-</p>
+      </div>
+
+      <!-- Sotto-vista: voto della giuria -->
+      <div id="jury-voting" class="hidden">
+        <h2 class="section-title">Il tuo verdetto</h2>
+        <div class="verdict-buttons">
+          <button class="btn btn-verdict btn-assolvi" id="btn-vote-assolvi">Assolvi</button>
+          <button class="btn btn-verdict btn-condanna" id="btn-vote-condanna">Condanna</button>
+        </div>
+        <p class="hint" id="vote-status">-</p>
+      </div>
+
+      <!-- Sotto-vista: giudice AI sta valutando -->
+      <div id="ai-judging" class="hidden">
+        <p class="hint typing-indicator">Il giudice sta esaminando gli atti<span class="dots"><span>.</span><span>.</span><span>.</span></span></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- VISTA: VERDETTO -->
+  <section class="view" id="view-verdict" data-view="verdict">
+    <div class="dossier verdict-dossier">
+      <div class="stamp" id="verdict-stamp">
+        <span id="stamp-text">ASSOLTO</span>
+      </div>
+      <div class="hero-illustration">
+        <img src="assets/images/verdict-assolto.png" alt="" id="verdict-illustration" onerror="this.parentElement.style.display='none'">
+      </div>
+
+      <h2 class="section-title">Riepilogo del caso</h2>
+      <div class="evidence-card evidence-accusa">
+        <p class="evidence-label">Accusa</p>
+        <p class="evidence-body" id="recap-accusa">-</p>
+      </div>
+      <div class="evidence-card evidence-difesa">
+        <p class="evidence-label">Difesa</p>
+        <p class="evidence-body" id="recap-difesa">-</p>
+      </div>
+
+      <h2 class="section-title">Voti della giuria</h2>
+      <ul class="vote-list" id="recap-vote-list"></ul>
+
+      <div class="evidence-card evidence-ai">
+        <p class="evidence-label">Giudizio del giudice AI</p>
+        <p class="evidence-body" id="recap-ai-motivazione">-</p>
+        <p class="evidence-footer">voto AI: <strong id="recap-ai-voto">-</strong></p>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-primary" id="btn-next-round">Prossimo processo</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script src="js/config.js"></script>
+<script src="js/confetti.js"></script>
+<script src="js/mock-server.js"></script>
+<script src="js/socket-client.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
