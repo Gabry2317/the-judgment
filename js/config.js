@@ -10,7 +10,7 @@ const JUDGEMENT_CONFIG = {
   // l'URL "raw" del file: il campo "server" si precompila da solo all'avvio.
   // Lascia vuoto per configurare l'indirizzo a mano come prima.
   // Esempio: 'https://gist.githubusercontent.com/tuoutente/xxxxx/raw/judgement-server.json'
-  SERVER_DISCOVERY_URL: '',
+  SERVER_DISCOVERY_URL: 'https://gist.githubusercontent.com/Gabry2317/c258d2718dff7c3ede0290111efe0984/raw/judgement-server.json',
 
   TIMERS: {
     difesa: 90,   // secondi concessi per scrivere la difesa
