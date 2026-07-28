@@ -315,3 +315,28 @@ textarea { min-height: 100px; resize: vertical; }
   .stamp { font-size: 17px; padding: 8px 14px; }
   .verdict-buttons { flex-direction: column; }
 }
+
+/* --- Pre-lobby: impostazioni host e countdown ---------------------------- */
+
+#lobby-settings-host { margin-top: 20px; padding-top: 16px; border-top: 1px dashed var(--border, #3a4460); }
+#lobby-countdown-status {
+  font-weight: 600;
+  color: var(--accent, #e8b64c);
+}
+
+/* --- Classifica di fine partita ------------------------------------------- */
+
+.scoreboard-wrap { overflow-x: auto; margin: 16px 0; }
+.scoreboard { width: 100%; border-collapse: collapse; font-size: 14px; }
+.scoreboard th, .scoreboard td {
+  padding: 8px 12px;
+  text-align: center;
+  border-bottom: 1px solid var(--border, #3a4460);
+  white-space: nowrap;
+}
+.scoreboard th:first-child, .scoreboard td:first-child { text-align: left; font-weight: 600; }
+.scoreboard .sb-assolto { color: #6fcf6f; font-weight: 600; }
+.scoreboard .sb-colpevole { color: #e06666; font-weight: 600; }
+.scoreboard .sb-vuoto { color: var(--text-muted, #8a93ac); }
+
+#rematch-panel { margin-top: 20px; padding-top: 16px; border-top: 1px dashed var(--border, #3a4460); text-align: center; }

@@ -33,10 +33,7 @@
         <span>Il tuo nome</span>
         <input type="text" id="input-nickname" maxlength="20" placeholder="es. Gabriele">
       </label>
-      <label class="field">
-        <span>Server (indirizzo Kitab)</span>
-        <input type="text" id="input-server-url" placeholder="ws://tuo-server:3000">
-      </label>
+      <input type="hidden" id="input-server-url">
 
       <div class="tab-switch" role="tablist">
         <button class="tab-btn active" id="tab-btn-create" data-tab="create">Crea tribunale</button>
@@ -88,7 +85,7 @@
     </div>
   </section>
 
-  <!-- VISTA: LOBBY -->
+  <!-- VISTA: LOBBY (pre-partita, in attesa che si raggiunga il numero minimo) -->
   <section class="view" id="view-lobby" data-view="lobby">
     <div class="dossier">
       <div class="hero-illustration">
@@ -98,28 +95,73 @@
       <h2 class="section-title">Presenti in aula</h2>
       <ul class="player-list" id="player-list"></ul>
 
-      <h2 class="section-title">Deposita un'accusa</h2>
-      <p class="hint">Puoi accusare chiunque, di qualsiasi cosa. Verrà assegnata a caso a un presente.</p>
-      <label class="field">
-        <span>Accusa</span>
-        <textarea id="input-accusa" maxlength="500" placeholder="Es. L'imputato ha mangiato l'ultima fetta di pizza senza avvisare nessuno..."></textarea>
-      </label>
-      <div class="actions">
-        <button class="btn btn-primary" id="btn-submit-accusa">Deposita accusa</button>
+      <!-- Pannello impostazioni, visibile solo all'host -->
+      <div id="lobby-settings-host" class="hidden">
+        <h2 class="section-title">Impostazioni (sei l'host)</h2>
+        <label class="field">
+          <span>Giocatori minimi per iniziare</span>
+          <input type="number" id="input-min-players" min="2" max="12" value="3">
+        </label>
+        <label class="field">
+          <span>Attesa prima dell'avvio automatico (secondi)</span>
+          <input type="number" id="input-countdown-seconds" min="5" max="120" value="20">
+        </label>
+        <div class="actions">
+          <button class="btn btn-secondary" id="btn-save-settings">Salva impostazioni</button>
+          <button class="btn btn-primary" id="btn-start-now">Avvia subito</button>
+        </div>
       </div>
-      <ul class="pending-list" id="pending-accuse-list"></ul>
+
+      <p class="hint" id="lobby-settings-readonly"></p>
+      <p class="hint" id="lobby-countdown-status"></p>
+    </div>
+  </section>
+
+  <!-- VISTA: FINE PARTITA (classifica + voto rivincita) -->
+  <section class="view" id="view-match-end" data-view="match-end">
+    <div class="dossier">
+      <h2 class="section-title">Partita <span id="match-end-number">1</span> conclusa</h2>
+      <div class="scoreboard-wrap">
+        <table class="scoreboard" id="scoreboard-table"></table>
+      </div>
+
+      <div id="rematch-panel" class="hidden">
+        <h2 class="section-title">Si rifà una partita?</h2>
+        <p class="hint" id="rematch-timer">--</p>
+        <div class="actions">
+          <button class="btn btn-primary" id="btn-rematch-yes">Sì, rivincita!</button>
+          <button class="btn btn-secondary" id="btn-rematch-no">No, basta così</button>
+        </div>
+        <p class="hint" id="rematch-status"></p>
+      </div>
     </div>
   </section>
 
   <!-- VISTA: PROCESSO -->
   <section class="view" id="view-trial" data-view="trial">
     <div class="dossier">
-      <p class="dossier-label">Fase: <span id="trial-phase-label">accusa</span> &mdash; <span id="trial-timer">--</span></p>
+      <p class="dossier-label">Round <span id="round-number">1</span> di <span id="round-total">-</span> &mdash; Fase: <span id="trial-phase-label">accusa</span> &mdash; <span id="trial-timer">--</span></p>
 
-      <div class="evidence-card evidence-accusa">
+      <!-- Sotto-vista: tocca a te scrivere l'accusa (visibile solo a chi ha il turno) -->
+      <div id="accusa-writer" class="hidden">
+        <h2 class="section-title">Tocca a te: scrivi l'accusa</h2>
+        <p class="hint">Stai per accusare <strong id="accusa-target-name">-</strong>. Il tuo nome non verrà mai rivelato.</p>
+        <label class="field">
+          <textarea id="input-accusa" maxlength="500" placeholder="Es. L'imputato ha mangiato l'ultima fetta di pizza senza avvisare nessuno..."></textarea>
+        </label>
+        <div class="actions">
+          <button class="btn btn-primary" id="btn-submit-accusa">Deposita accusa</button>
+        </div>
+      </div>
+
+      <!-- Sotto-vista: qualcun altro sta scrivendo l'accusa (identità non rivelata) -->
+      <div id="accusa-waiting" class="hidden">
+        <p class="hint typing-indicator">Qualcuno sta scrivendo un'accusa anonima<span class="dots"><span>.</span><span>.</span><span>.</span></span></p>
+      </div>
+
+      <div class="evidence-card evidence-accusa hidden" id="evidence-accusa-card">
         <p class="evidence-label">Accusa contro <strong id="trial-imputato-name">-</strong></p>
         <p class="evidence-body" id="trial-accusa-text">-</p>
-        <p class="evidence-footer">depositata da <span id="trial-accusatore-name">-</span></p>
       </div>
 
       <!-- Sotto-vista: scrittura difesa (visibile solo all'imputato) -->
@@ -191,7 +233,7 @@
       </div>
 
       <div class="actions">
-        <button class="btn btn-primary" id="btn-next-round">Prossimo processo</button>
+        <p class="hint" id="verdict-next-hint">Il prossimo round inizia tra pochi istanti...</p>
       </div>
     </div>
   </section>

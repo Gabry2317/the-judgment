@@ -5,6 +5,7 @@
 (function () {
   const E = JUDGEMENT_CONFIG.EVENTS;
   let myNickname = '';
+  let iAmHost = false;
   let iAmImputato = false;
   let myVote = null;
   let countdownHandle = null;
@@ -79,14 +80,47 @@
   function bindGameEvents() {
     JudgementSocket.on(E.LOBBY_JOINED, ({ code, players }) => {
       UI.renderLobby(code, players);
+      UI.hideCountdown();
       UI.showView('lobby');
+    });
+
+    JudgementSocket.on(E.LOBBY_PLAYERS, (players) => {
+      UI.renderPlayerList(players);
+    });
+
+    JudgementSocket.on(E.LOBBY_SETTINGS, (settings) => {
+      iAmHost = settings.hostId === JudgementSocket.getMyId();
+      UI.renderLobbySettings(settings, iAmHost);
+    });
+
+    JudgementSocket.on(E.LOBBY_COUNTDOWN_START, ({ endsAt }) => UI.showCountdown(endsAt));
+    JudgementSocket.on(E.LOBBY_COUNTDOWN_CANCEL, () => UI.hideCountdown());
+
+    JudgementSocket.on(E.LOBBY_CLOSED, ({ reason }) => {
+      alert('Il tribunale è stato chiuso (' + (reason || 'inattività') + '). Si torna alla home.');
+      location.reload();
+    });
+
+    JudgementSocket.on(E.MATCH_STARTED, () => {
+      UI.hideCountdown();
+      UI.showView('trial');
+    });
+
+    JudgementSocket.on(E.ROUND_WAITING, ({ roundNumber, totalRounds }) => {
+      UI.setRoundLabel(roundNumber, totalRounds);
+      UI.showAccusaWaiting();
+      UI.setPhase('accusa');
+    });
+
+    JudgementSocket.on(E.ROUND_YOUR_TURN, ({ imputato, roundNumber, totalRounds }) => {
+      UI.setRoundLabel(roundNumber, totalRounds);
+      UI.showAccusaTurn(imputato);
     });
 
     JudgementSocket.on(E.TRIAL_STARTED, (data) => {
       iAmImputato = data.imputato === myNickname;
       myVote = null;
       UI.renderTrialAccusa(data);
-      UI.showView('trial');
       document.getElementById('evidence-difesa-card').classList.add('hidden');
       UI.setPhase(iAmImputato ? 'difesa-imputato' : 'difesa-attesa');
       if (iAmImputato) startCountdown(JUDGEMENT_CONFIG.TIMERS.difesa, submitEmptyDifesaIfExpired);
@@ -112,22 +146,28 @@
     JudgementSocket.on(E.TRIAL_VERDICT, (data) => {
       const votiGiuria = [...data.votiGiuria];
       if (!iAmImputato && myVote) votiGiuria.push({ giocatore: myNickname, decisione: myVote });
-
-      const esitoFinale = computeVerdict(votiGiuria, data.votoAI);
-      UI.renderVerdict({ ...data, votiGiuria, esitoFinale });
+      UI.renderVerdict({ ...data, votiGiuria });
       UI.showView('verdict');
     });
 
-    JudgementSocket.on(E.ERROR, ({ message }) => UI.setHomeError(message));
-  }
+    JudgementSocket.on(E.MATCH_ENDED, ({ matchNumber, scoreboard }) => {
+      UI.renderMatchEnd(matchNumber, scoreboard);
+      UI.showView('match-end');
+    });
 
-  // Il voto del giudice AI conta come un giurato aggiuntivo: maggioranza
-  // semplice su (giurati umani + 1). In caso di parità l'imputato viene
-  // assolto (il beneficio del dubbio prevale).
-  function computeVerdict(votiGiuria, votoAI) {
-    const condanne = votiGiuria.filter(v => v.decisione === 'condanna').length + (votoAI === 'condanna' ? 1 : 0);
-    const assoluzioni = votiGiuria.filter(v => v.decisione === 'assolvi').length + (votoAI === 'assolvi' ? 1 : 0);
-    return condanne > assoluzioni ? 'colpevole' : 'assolto';
+    JudgementSocket.on(E.REMATCH_VOTE_START, ({ endsAt }) => {
+      UI.showRematchVote(endsAt);
+      setRematchButtonsEnabled(true);
+    });
+
+    JudgementSocket.on(E.REMATCH_RESULT, ({ again, yes, no }) => {
+      UI.setRematchStatus(again
+        ? `Si continua! (${yes} sì, ${no} no)`
+        : `Niente rivincita (${yes} sì, ${no} no). Il tribunale chiuderà se resta inattivo.`);
+      setRematchButtonsEnabled(false);
+    });
+
+    JudgementSocket.on(E.ERROR, ({ message }) => UI.setHomeError(message));
   }
 
   function submitEmptyDifesaIfExpired() {
@@ -140,13 +180,26 @@
     document.getElementById('btn-vote-condanna').disabled = !enabled;
   }
 
-  // --- Vista lobby: deposito accusa -----------------------------------------
+  // --- Pre-lobby: impostazioni host -------------------------------------------
+
+  document.getElementById('btn-save-settings').addEventListener('click', () => {
+    const minPlayers = parseInt(document.getElementById('input-min-players').value, 10);
+    const countdownSeconds = parseInt(document.getElementById('input-countdown-seconds').value, 10);
+    JudgementSocket.emit(E.LOBBY_SETTINGS_UPDATE, { minPlayers, countdownSeconds });
+  });
+
+  document.getElementById('btn-start-now').addEventListener('click', () => {
+    JudgementSocket.emit(E.LOBBY_START_NOW, {});
+  });
+
+  // --- Round: deposito accusa (solo a chi ha il turno) ------------------------
 
   document.getElementById('btn-submit-accusa').addEventListener('click', () => {
-    const text = document.getElementById('input-accusa').value.trim();
+    const input = document.getElementById('input-accusa');
+    const text = input.value.trim();
     if (!text) return;
     JudgementSocket.emit(E.ACCUSA_SUBMIT, { text });
-    document.getElementById('input-accusa').value = '';
+    input.value = '';
   });
 
   // --- Vista processo: difesa e voto -----------------------------------------
@@ -169,11 +222,23 @@
     UI.setVoteStatus('Voto registrato: ' + (decisione === 'assolvi' ? 'assolvi' : 'condanna') + '. In attesa degli altri.');
   }
 
-  // --- Vista verdetto ---------------------------------------------------------
+  // --- Fine partita: voto rivincita --------------------------------------------
 
-  document.getElementById('btn-next-round').addEventListener('click', () => {
-    JudgementSocket.emit(E.TRIAL_NEXT, {});
-    UI.showView('lobby');
+  function setRematchButtonsEnabled(enabled) {
+    document.getElementById('btn-rematch-yes').disabled = !enabled;
+    document.getElementById('btn-rematch-no').disabled = !enabled;
+  }
+
+  document.getElementById('btn-rematch-yes').addEventListener('click', () => {
+    JudgementSocket.emit(E.REMATCH_VOTE_CAST, { vote: true });
+    setRematchButtonsEnabled(false);
+    UI.setRematchStatus('Voto registrato: sì. In attesa degli altri...');
+  });
+
+  document.getElementById('btn-rematch-no').addEventListener('click', () => {
+    JudgementSocket.emit(E.REMATCH_VOTE_CAST, { vote: false });
+    setRematchButtonsEnabled(false);
+    UI.setRematchStatus('Voto registrato: no. In attesa degli altri...');
   });
 
   UI.showView('home');

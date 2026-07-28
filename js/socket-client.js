@@ -5,6 +5,7 @@
 const JudgementSocket = (() => {
   let backend = null;
   let mode = 'none'; // 'real' | 'mock'
+  let myId = null;
 
   function loadSocketIoScript(callback) {
     if (window.io) return callback();
@@ -21,6 +22,7 @@ const JudgementSocket = (() => {
   function connect({ serverUrl, nickname, joinCode, pubblica, onStatusChange }) {
     if (!serverUrl) {
       mode = 'mock';
+      myId = 'me';
       onStatusChange('demo locale');
       backend = createMockServer();
       backend.connect(nickname);
@@ -42,6 +44,7 @@ const JudgementSocket = (() => {
         emit: (event, payload) => socket.emit(event, payload),
       };
       socket.on('connect', () => {
+        myId = socket.id;
         onStatusChange('connesso');
         const E = JUDGEMENT_CONFIG.EVENTS;
         if (joinCode) socket.emit(E.LOBBY_JOIN, { nickname, code: joinCode });
@@ -82,6 +85,7 @@ const JudgementSocket = (() => {
   }
 
   function getMode() { return mode; }
+  function getMyId() { return myId; }
 
-  return { connect, on, emit, getMode, requestPublicLobbies };
+  return { connect, on, emit, getMode, getMyId, requestPublicLobbies };
 })();
