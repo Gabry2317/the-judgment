@@ -442,3 +442,27 @@ textarea { min-height: 100px; resize: vertical; }
   display: inline-block; padding: 6px 12px; border-radius: 10px;
 }
 @media (prefers-reduced-motion: reduce) { #rematch-timer { animation: none; } }
+
+/* --- Pulsante pausa e banner ------------------------------------------------ */
+
+.btn-pause {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 50%; border: none; cursor: pointer;
+  background: var(--panel-alt); color: var(--ink); font-size: 13px; margin-left: 6px;
+  vertical-align: middle; transition: transform 0.15s var(--ease-bounce), background 0.2s;
+}
+.btn-pause:hover { background: var(--ink-light); transform: scale(1.08); }
+.btn-pause.is-paused { background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: #fff; }
+
+.pause-banner {
+  background: linear-gradient(135deg, rgba(200,149,47,0.16), rgba(200,149,47,0.06));
+  border: 1px dashed var(--gold);
+  border-radius: 10px;
+  padding: 8px 12px;
+  color: var(--gold-dark);
+  font-weight: 700;
+}
+
+.timer-row {
+  display: flex; align-items: center; gap: 4px;
+}

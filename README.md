@@ -1,64 +1,54 @@
-# The Judgement
+# The Judgement — client
 
-Gioco multiplayer di "tribunale virtuale": i giocatori si accusano a
-vicenda, l'imputato (scelto a caso) si difende per iscritto, la giuria
-(gli altri giocatori) vota, e un giudice AI (via Groq) aggiunge il proprio
-verdetto motivato.
+Client statico (HTML/CSS/JS vanilla, nessun bundler) pensato per GitHub Pages.
+Si collega a un server Socket.IO esterno (il tuo server Debian configurato con Kitab)
+oppure, se il campo "server" viene lasciato vuoto, gira in **modalità demo locale**
+con un finto backend in-memory (`js/mock-server.js`) per testare tutta l'interfaccia
+senza bisogno del backend reale.
 
-## Architettura
+## Come provarlo subito
+
+Basta aprire `index.html` in un browser (va bene anche `file://`, non serve un server
+web). Inserisci un nome, lascia vuoto il campo server, premi "Apri un nuovo tribunale":
+la demo ti assegna come imputato e simula accusatore, giuria bot e giudice AI.
+
+## Struttura
 
 ```
-the-judgement/
-├── client/            frontend statico (HTML/CSS/JS vanilla) → GitHub Pages
-└── backend/            server multiplayer Node.js/Socket.IO → server Debian
-    └── kitab/            installer automatico per il server Debian
+index.html          struttura delle 4 viste (home, lobby, processo, verdetto)
+css/style.css        design system "fascicolo giudiziario"
+js/config.js         costanti + contratto eventi condiviso col backend
+js/mock-server.js     backend finto locale per test senza server reale
+js/socket-client.js   astrazione: sceglie Socket.IO reale o mock
+js/ui.js              rendering DOM puro
+js/app.js             logica applicativa: wiring eventi, timer, calcolo verdetto
 ```
 
-- **`client/`** è già pronto per GitHub Pages così com'è: nessuna build,
-  nessuna dipendenza da installare. Se il campo "server" nella home viene
-  lasciato vuoto, gira in modalità demo locale con un backend finto
-  (`js/mock-server.js`), utile per provare l'interfaccia senza server reale.
-- **`backend/`** implementa esattamente il contratto eventi descritto in
-  `client/js/config.js` e `client/README.md`: lobby, turni, timer, voti e
-  giudice AI. Va ospitato altrove (non su GitHub) — tipicamente sul tuo
-  server Debian personale.
-- **`backend/kitab/`** è l'installer che automatizza *tutta* la
-  configurazione del server Debian: dipendenze, ambiente, firewall e
-  apertura della porta sul router via UPnP, avvio automatico col boot.
+## Contratto eventi (da rispettare nel backend Node.js/Socket.IO)
 
-## Setup rapido
+Client → server: `lobby:create` `{nickname, pubblica}`, `lobby:join` `{nickname, code}`,
+`lobby:list_public` `{}`, `accusa:submit`, `difesa:submit`, `voto:cast`, `trial:next`.
 
-1. **Backend** (sul server Debian):
-   ```bash
-   cd backend
-   sudo bash kitab/kitab.sh install
-   ```
-   Segui le domande (porta, chiave API Groq, dominio consentito). Alla fine
-   Kitab stampa l'indirizzo da usare nel client.
+Server → client: `lobby:joined` `{code, players}`, `lobby:players`,
+`lobby:list_result` `{lobbies: [{code, host, playerCount, caseNumber}]}`, `trial:started`,
+`trial:defense_submitted`, `trial:voting_phase`, `trial:ai_judging`,
+`trial:verdict`, `error`.
 
-2. **Frontend** (GitHub Pages): pubblica il contenuto di `client/` così
-   com'è (es. con GitHub Pages puntato sul branch/cartella di `client/`).
-   Nessuna modifica al codice richiesta: nel gioco, gli utenti inseriscono
-   l'indirizzo del tuo server Debian nel campo "server" della home.
+Nota sulla ricerca di lobby pubbliche: il client, quando preme "Aggiorna elenco",
+si connette (o riusa la connessione) ed emette `lobby:list_public`; il server deve
+rispondere con `lobby:list_result` contenente solo le lobby con `pubblica: true`
+ancora in stato di attesa (non a processo in corso, per evitare che si entri a
+metà partita).
 
-3. **Gioca**: crea o entra in un tribunale, deposita un'accusa, aspetta che
-   il sistema assegni casualmente l'imputato, scrivi la difesa, vota, e
-   guarda il verdetto finale — combinazione dei voti umani + il giudice AI.
+Payload attesi e logica di combinazione voti sono documentati nei commenti di
+`config.js` e `app.js`. Il client calcola già in locale l'esito finale (maggioranza
+semplice includendo il voto AI come un giurato in più, parità = assolto) — se preferisci
+che sia il server l'unica fonte di verità sull'esito, sposta `computeVerdict` lato
+backend e passa `esitoFinale` già pronto dentro l'evento `trial:verdict`.
 
-## Dettagli
+## Prossimi passi
 
-- Documentazione del client: `client/README.md`
-- Documentazione del backend (sviluppo, test, sicurezza): `backend/README.md`
-- Documentazione di Kitab (installer Debian): `backend/kitab/README.md`
-
-## Note su modularità ed espandibilità
-
-Il progetto è diviso in tre livelli indipendenti che comunicano solo tramite
-il contratto eventi Socket.IO documentato in `client/js/config.js`:
-
-- Puoi sostituire il frontend (es. porta il client su React/Vue) senza
-  toccare il backend, purché rispetti lo stesso contratto eventi.
-- Puoi sostituire il provider AI del giudice (`backend/src/groqJudge.js`)
-  senza toccare la logica di lobby/turni (`backend/src/lobbyManager.js`).
-- Puoi ospitare il backend con un altro installer/orchestratore (Docker,
-  altro OS) ignorando Kitab, che è solo una comodità per Debian.
+- Collegare al vero server Debian (Kitab) inserendo il suo indirizzo WebSocket nel
+  campo "server" — nessuna modifica al codice necessaria.
+- Aggiungere autenticazione/anti-spam sul deposito accuse quando il backend è pronto.
+- Persistenza dello storico processi (facoltativa) per una vista "archivio casi".

@@ -27,7 +27,7 @@ function createMockServer() {
     state = {
       code: Math.random().toString(36).slice(2, 8).toUpperCase(),
       players: [{ id: 'me', nome: nickname }, ...BOT_NAMES.map((n, i) => ({ id: 'bot' + i, nome: n }))],
-      settings: { minPlayers: 3, countdownSeconds: 3 },
+      settings: { minPlayers: 3, countdownSeconds: 3, accusaTurnoSeconds: 60, difesaSeconds: 90, votoSeconds: 30, verdictSeconds: 8, rematchVoteSeconds: 20 },
       scoreboard: new Map(),
       matchNumber: 0,
       order: [],
@@ -42,11 +42,14 @@ function createMockServer() {
     setTimeout(() => {
       const endsAt = Date.now() + state.settings.countdownSeconds * 1000;
       emitToClient(E.LOBBY_COUNTDOWN_START, { endsAt });
-      setTimeout(() => startMatch(), state.settings.countdownSeconds * 1000);
+      state.countdownHandle = setTimeout(() => startMatch(), state.settings.countdownSeconds * 1000);
     }, 500);
   }
 
   function startMatch() {
+    if (state.matchInProgress) return;
+    state.matchInProgress = true;
+    clearTimeout(state.countdownHandle);
     state.matchNumber += 1;
     state.order = shuffle(state.players.map(p => p.id));
     state.roundIndex = 0;
@@ -69,7 +72,7 @@ function createMockServer() {
     emitToClient(E.ROUND_WAITING, { roundNumber, totalRounds });
 
     if (accusatore.id === 'me') {
-      emitToClient(E.ROUND_YOUR_TURN, { imputato: imputato.nome, roundNumber, totalRounds });
+      emitToClient(E.ROUND_YOUR_TURN, { imputato: imputato.nome, roundNumber, totalRounds, endsAt: Date.now() + state.settings.accusaTurnoSeconds * 1000 });
     } else {
       setTimeout(() => submitAccusa(ACCUSE_DEMO[Math.floor(Math.random() * ACCUSE_DEMO.length)]), 1400);
     }
@@ -79,7 +82,7 @@ function createMockServer() {
     const trial = state.trial;
     trial.accusa = text;
     const imputato = state.players.find(p => p.id === trial.imputatoId);
-    emitToClient(E.TRIAL_STARTED, { imputato: imputato.nome, accusa: text });
+    emitToClient(E.TRIAL_STARTED, { imputato: imputato.nome, accusa: text, endsAt: Date.now() + state.settings.difesaSeconds * 1000 });
 
     if (trial.imputatoId !== 'me') {
       setTimeout(() => submitDifesa('Non è come sembra, c\'è una spiegazione perfettamente ragionevole per tutto questo.'), 2200);
@@ -92,7 +95,7 @@ function createMockServer() {
     trial.difesa = text;
     emitToClient(E.TRIAL_DEFENSE_SUBMITTED, { difesa: text });
     setTimeout(() => {
-      emitToClient(E.TRIAL_VOTING_PHASE, {});
+      emitToClient(E.TRIAL_VOTING_PHASE, { endsAt: Date.now() + state.settings.votoSeconds * 1000 });
       setTimeout(() => runAiJudge(), 3500);
     }, 600);
   }
@@ -128,14 +131,16 @@ function createMockServer() {
           ? 'La difesa presenta una spiegazione coerente e plausibile; non emergono contraddizioni sostanziali nella ricostruzione dei fatti.'
           : 'La difesa non affronta in modo convincente il punto centrale dell\'accusa e presenta incongruenze logiche.',
         esitoFinale,
+        endsAt: Date.now() + state.settings.verdictSeconds * 1000,
       });
 
       state.roundIndex += 1;
-      setTimeout(() => { state.trial = null; startRound(); }, 2500);
+      setTimeout(() => { state.trial = null; startRound(); }, state.settings.verdictSeconds * 1000);
     }, 2200);
   }
 
   function endMatch() {
+    state.matchInProgress = false;
     const scoreboard = [...state.scoreboard.values()].map(e => ({ nome: e.nome, matches: e.matches.slice() }));
     emitToClient(E.MATCH_ENDED, { matchNumber: state.matchNumber, scoreboard });
     setTimeout(() => {
@@ -159,6 +164,11 @@ function createMockServer() {
     },
     on,
     emit(event, payload) {
+      if (event === E.LOBBY_SETTINGS_UPDATE) {
+        Object.assign(state.settings, payload);
+        emitToClient(E.LOBBY_SETTINGS, { ...state.settings, hostId: 'me' });
+      }
+      if (event === E.LOBBY_START_NOW) startMatch();
       if (event === E.ACCUSA_SUBMIT && state.trial && state.trial.accusatoreId === 'me' && !state.trial.accusa) {
         submitAccusa(payload.text);
       }

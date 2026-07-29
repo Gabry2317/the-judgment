@@ -98,14 +98,46 @@
       <!-- Pannello impostazioni, visibile solo all'host -->
       <div id="lobby-settings-host" class="hidden">
         <h2 class="section-title">Impostazioni (sei l'host)</h2>
-        <label class="field">
-          <span>Giocatori minimi per iniziare</span>
-          <input type="number" id="input-min-players" min="2" max="12" value="3">
-        </label>
-        <label class="field">
-          <span>Attesa prima dell'avvio automatico (secondi)</span>
-          <input type="number" id="input-countdown-seconds" min="5" max="120" value="20">
-        </label>
+
+        <div class="tab-switch" role="tablist">
+          <button type="button" class="tab-btn active" data-stab="giocatori">Giocatori</button>
+          <button type="button" class="tab-btn" data-stab="timer">Timer</button>
+        </div>
+
+        <div data-stab-panel="giocatori">
+          <label class="field">
+            <span>Giocatori minimi per iniziare</span>
+            <input type="number" id="input-min-players" min="2" max="12" value="3">
+          </label>
+        </div>
+
+        <div data-stab-panel="timer" class="hidden">
+          <label class="field">
+            <span>Attesa prima dell'avvio automatico (secondi)</span>
+            <input type="number" id="input-countdown-seconds" min="5" max="120" value="20">
+          </label>
+          <label class="field">
+            <span>Tempo per scrivere l'accusa (secondi)</span>
+            <input type="number" id="input-accusa-seconds" min="15" max="180" value="60">
+          </label>
+          <label class="field">
+            <span>Tempo per scrivere la difesa (secondi)</span>
+            <input type="number" id="input-difesa-seconds" min="20" max="240" value="90">
+          </label>
+          <label class="field">
+            <span>Tempo per votare (secondi)</span>
+            <input type="number" id="input-voto-seconds" min="10" max="120" value="30">
+          </label>
+          <label class="field">
+            <span>Verdetto a schermo prima del round successivo (secondi)</span>
+            <input type="number" id="input-verdict-seconds" min="3" max="10" value="8">
+          </label>
+          <label class="field">
+            <span>Tempo per votare la rivincita (secondi)</span>
+            <input type="number" id="input-rematch-seconds" min="10" max="90" value="20">
+          </label>
+        </div>
+
         <div class="actions">
           <button class="btn btn-secondary" id="btn-save-settings">Salva impostazioni</button>
           <button class="btn btn-primary" id="btn-start-now">Avvia subito</button>
@@ -113,7 +145,10 @@
       </div>
 
       <p class="hint" id="lobby-settings-readonly"></p>
-      <p class="hint" id="lobby-countdown-status"></p>
+      <div class="timer-row hidden" id="lobby-countdown-status">
+        <span id="lobby-countdown-text"></span>
+        <button type="button" class="btn-pause hidden" id="btn-pause-countdown" title="Metti in pausa / riprendi">⏸</button>
+      </div>
     </div>
   </section>
 
@@ -140,7 +175,13 @@
   <!-- VISTA: PROCESSO -->
   <section class="view" id="view-trial" data-view="trial">
     <div class="dossier">
-      <p class="dossier-label">Round <span id="round-number">1</span> di <span id="round-total">-</span> &mdash; Fase: <span id="trial-phase-label">accusa</span> &mdash; <span id="trial-timer">--</span></p>
+      <p class="dossier-label">
+        Round <span id="round-number">1</span> di <span id="round-total">-</span> &mdash;
+        Fase: <span id="trial-phase-label">accusa</span> &mdash;
+        <span id="trial-timer">--</span>
+        <button type="button" class="btn-pause hidden" id="btn-pause-trial" title="Metti in pausa / riprendi">⏸</button>
+      </p>
+      <p class="hint pause-banner hidden" id="pause-banner">⏸ L'host ha messo in pausa il timer.</p>
 
       <!-- Sotto-vista: tocca a te scrivere l'accusa (visibile solo a chi ha il turno) -->
       <div id="accusa-writer" class="hidden">
@@ -233,7 +274,11 @@
       </div>
 
       <div class="actions">
-        <p class="hint" id="verdict-next-hint">Il prossimo round inizia tra pochi istanti...</p>
+        <p class="hint">
+          Prossimo round tra <span id="verdict-timer">--</span>
+          <button type="button" class="btn-pause hidden" id="btn-pause-verdict" title="Metti in pausa / riprendi">⏸</button>
+        </p>
+        <p class="hint pause-banner hidden" id="pause-banner-verdict">⏸ L'host ha messo in pausa il timer.</p>
       </div>
     </div>
   </section>

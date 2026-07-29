@@ -36,7 +36,7 @@ const UI = (() => {
     renderPlayerList(players);
   }
 
-  // --- Pre-lobby: impostazioni host, sola lettura, countdown ---------------
+  // --- Pre-lobby: impostazioni host, sola lettura ---------------------------
 
   function renderLobbySettings(settings, isHost) {
     document.getElementById('lobby-settings-host').classList.toggle('hidden', !isHost);
@@ -44,31 +44,97 @@ const UI = (() => {
     if (isHost) {
       document.getElementById('input-min-players').value = settings.minPlayers;
       document.getElementById('input-countdown-seconds').value = settings.countdownSeconds;
+      document.getElementById('input-accusa-seconds').value = settings.accusaTurnoSeconds;
+      document.getElementById('input-difesa-seconds').value = settings.difesaSeconds;
+      document.getElementById('input-voto-seconds').value = settings.votoSeconds;
+      document.getElementById('input-verdict-seconds').value = settings.verdictSeconds;
+      document.getElementById('input-rematch-seconds').value = settings.rematchVoteSeconds;
     } else {
-      document.getElementById('lobby-settings-readonly').textContent =
-        `Si parte automaticamente con almeno ${settings.minPlayers} giocatori (attesa di ${settings.countdownSeconds}s), oppure quando l'host avvia subito.`;
+      document.getElementById('lobby-settings-readonly').innerHTML =
+        `Minimo <strong>${settings.minPlayers}</strong> giocatori, avvio dopo <strong>${settings.countdownSeconds}s</strong> di attesa.<br>
+         Tempi di questa partita: accusa <strong>${settings.accusaTurnoSeconds}s</strong> &middot;
+         difesa <strong>${settings.difesaSeconds}s</strong> &middot;
+         voto <strong>${settings.votoSeconds}s</strong> &middot;
+         verdetto <strong>${settings.verdictSeconds}s</strong> &middot;
+         rivincita <strong>${settings.rematchVoteSeconds}s</strong>.`;
     }
   }
 
+  // --- Timer generici basati su "endsAt", con supporto pausa ----------------
+  // Ogni elemento timer gestito ha: dataset.endsAt (quando scatta) e
+  // dataset.paused ('1'/'0') + dataset.remainingMs (se in pausa).
+
+  function setTimerRunning(textEl, endsAt) {
+    textEl.dataset.paused = '0';
+    textEl.dataset.endsAt = endsAt;
+  }
+
+  function setTimerPaused(textEl, remainingMs) {
+    textEl.dataset.paused = '1';
+    textEl.dataset.remainingMs = remainingMs;
+  }
+
+  function tickTimerElement(el) {
+    if (!el || !el.dataset.endsAt && el.dataset.paused !== '1') return;
+    let seconds;
+    if (el.dataset.paused === '1') {
+      seconds = Math.ceil(parseInt(el.dataset.remainingMs, 10) / 1000);
+    } else {
+      seconds = Math.max(0, Math.ceil((parseInt(el.dataset.endsAt, 10) - Date.now()) / 1000));
+    }
+    el.textContent = isNaN(seconds) ? '--' : seconds + 's';
+  }
+
+  setInterval(() => {
+    tickTimerElement(document.getElementById('trial-timer'));
+    tickTimerElement(document.getElementById('lobby-countdown-text'));
+    tickTimerElement(document.getElementById('rematch-timer'));
+    tickTimerElement(document.getElementById('verdict-timer'));
+  }, 500);
+
   function showCountdown(endsAt) {
-    const el = document.getElementById('lobby-countdown-status');
-    el.classList.remove('hidden');
-    el.dataset.endsAt = endsAt;
+    const wrap = document.getElementById('lobby-countdown-status');
+    wrap.classList.remove('hidden');
+    setTimerRunning(document.getElementById('lobby-countdown-text'), endsAt);
   }
 
   function hideCountdown() {
-    const el = document.getElementById('lobby-countdown-status');
-    el.classList.add('hidden');
-    el.textContent = '';
+    document.getElementById('lobby-countdown-status').classList.add('hidden');
   }
 
-  function tickCountdown() {
-    const el = document.getElementById('lobby-countdown-status');
-    if (el.classList.contains('hidden') || !el.dataset.endsAt) return;
-    const secondsLeft = Math.max(0, Math.ceil((parseInt(el.dataset.endsAt, 10) - Date.now()) / 1000));
-    el.textContent = `Si parte tra ${secondsLeft}s...`;
+  const PAUSE_TARGETS = {
+    countdown: { timerEl: 'lobby-countdown-text', btnId: 'btn-pause-countdown', bannerId: null },
+    accusa: { timerEl: 'trial-timer', btnId: 'btn-pause-trial', bannerId: 'pause-banner' },
+    difesa: { timerEl: 'trial-timer', btnId: 'btn-pause-trial', bannerId: 'pause-banner' },
+    voto: { timerEl: 'trial-timer', btnId: 'btn-pause-trial', bannerId: 'pause-banner' },
+    verdetto: { timerEl: 'verdict-timer', btnId: 'btn-pause-verdict', bannerId: 'pause-banner-verdict' },
+  };
+
+  function setHostVisibilityForPauseButtons(isHost) {
+    Object.values(PAUSE_TARGETS).forEach(t => {
+      const btn = document.getElementById(t.btnId);
+      if (btn) btn.classList.toggle('hidden', !isHost);
+    });
   }
-  setInterval(tickCountdown, 500);
+
+  function applyPauseState(phase, paused, endsAt, remainingMs) {
+    const target = PAUSE_TARGETS[phase];
+    if (!target) return;
+    const el = document.getElementById(target.timerEl);
+    if (el) {
+      if (paused) setTimerPaused(el, remainingMs);
+      else setTimerRunning(el, endsAt);
+    }
+    if (target.bannerId) {
+      const banner = document.getElementById(target.bannerId);
+      if (banner) banner.classList.toggle('hidden', !paused);
+    }
+    const btn = document.getElementById(target.btnId);
+    if (btn) {
+      btn.classList.toggle('is-paused', !!paused);
+      btn.textContent = paused ? '▶' : '⏸';
+    }
+  }
 
   // --- Round: turno di accusa / attesa --------------------------------------
 
@@ -77,12 +143,14 @@ const UI = (() => {
     document.getElementById('round-total').textContent = totalRounds;
   }
 
-  function showAccusaTurn(imputatoNome) {
+  function showAccusaTurn(imputatoNome, endsAt) {
     document.getElementById('accusa-target-name').textContent = imputatoNome;
     document.getElementById('accusa-writer').classList.remove('hidden');
     document.getElementById('accusa-waiting').classList.add('hidden');
     document.getElementById('evidence-accusa-card').classList.add('hidden');
     document.getElementById('evidence-difesa-card').classList.add('hidden');
+    setTimerRunning(document.getElementById('trial-timer'), endsAt);
+    document.getElementById('pause-banner').classList.add('hidden');
   }
 
   function showAccusaWaiting() {
@@ -90,15 +158,18 @@ const UI = (() => {
     document.getElementById('accusa-waiting').classList.remove('hidden');
     document.getElementById('evidence-accusa-card').classList.add('hidden');
     document.getElementById('evidence-difesa-card').classList.add('hidden');
+    document.getElementById('trial-timer').textContent = '--';
+    document.getElementById('pause-banner').classList.add('hidden');
   }
 
-  function renderTrialAccusa({ imputato, accusa }) {
+  function renderTrialAccusa({ imputato, accusa, endsAt }) {
     document.getElementById('accusa-writer').classList.add('hidden');
     document.getElementById('accusa-waiting').classList.add('hidden');
     document.getElementById('evidence-accusa-card').classList.remove('hidden');
     document.getElementById('trial-imputato-name').textContent = imputato;
     document.getElementById('trial-accusa-text').textContent = accusa;
     document.getElementById('trial-phase-label').textContent = 'lettura accusa';
+    if (endsAt) setTimerRunning(document.getElementById('trial-timer'), endsAt);
   }
 
   function setPhase(phase) {
@@ -116,8 +187,15 @@ const UI = (() => {
     document.getElementById('trial-difesa-text').textContent = text;
   }
 
-  function setTimer(seconds) {
-    document.getElementById('trial-timer').textContent = seconds !== null ? seconds + 's' : '--';
+  function setVotingTimer(endsAt) {
+    setTimerRunning(document.getElementById('trial-timer'), endsAt);
+  }
+
+  function clearTrialTimer() {
+    const el = document.getElementById('trial-timer');
+    el.textContent = '--';
+    delete el.dataset.endsAt;
+    el.dataset.paused = '0';
   }
 
   function setVoteStatus(text) {
@@ -144,7 +222,6 @@ const UI = (() => {
     stampText.textContent = assolto ? 'ASSOLTO' : 'COLPEVOLE';
     stamp.classList.toggle('stamp-guilty', !assolto);
     stamp.classList.remove('show');
-    // forza il reflow per far ripartire l'animazione del timbro ad ogni verdetto
     void stamp.offsetWidth;
     requestAnimationFrame(() => stamp.classList.add('show'));
 
@@ -204,17 +281,9 @@ const UI = (() => {
   function showRematchVote(endsAt) {
     const panel = document.getElementById('rematch-panel');
     panel.classList.remove('hidden');
-    panel.dataset.endsAt = endsAt;
+    setTimerRunning(document.getElementById('rematch-timer'), endsAt);
     document.getElementById('rematch-status').textContent = '';
   }
-
-  function tickRematchTimer() {
-    const panel = document.getElementById('rematch-panel');
-    if (panel.classList.contains('hidden') || !panel.dataset.endsAt) return;
-    const secondsLeft = Math.max(0, Math.ceil((parseInt(panel.dataset.endsAt, 10) - Date.now()) / 1000));
-    document.getElementById('rematch-timer').textContent = `Tempo per votare: ${secondsLeft}s`;
-  }
-  setInterval(tickRematchTimer, 500);
 
   function setRematchStatus(text) {
     document.getElementById('rematch-status').textContent = text;
@@ -228,9 +297,9 @@ const UI = (() => {
 
   return {
     showView, setConnectionStatus, setHomeError, renderLobby, renderPlayerList, renderPublicLobbies,
-    renderLobbySettings, showCountdown, hideCountdown,
+    renderLobbySettings, showCountdown, hideCountdown, setHostVisibilityForPauseButtons, applyPauseState,
     setRoundLabel, showAccusaTurn, showAccusaWaiting,
-    renderTrialAccusa, setPhase, showDifesaEvidence, setTimer,
+    renderTrialAccusa, setPhase, showDifesaEvidence, setVotingTimer, clearTrialTimer,
     setVoteStatus, renderVerdict,
     renderMatchEnd, showRematchVote, setRematchStatus,
   };

@@ -1,6 +1,6 @@
-// Punto di ingresso: collega i pulsanti della UI agli eventi socket e tiene
-// lo stato minimo necessario lato client (il server resta l'autorità sulle
-// regole di gioco vere e proprie).
+// Punto di ingresso: collega i pulsanti della UI agli eventi socket.
+// I timer sono guidati dal server (ogni evento porta un "endsAt" assoluto),
+// così pausa/ripresa lato host restano sempre sincronizzate per tutti.
 
 (function () {
   const E = JUDGEMENT_CONFIG.EVENTS;
@@ -8,39 +8,28 @@
   let iAmHost = false;
   let iAmImputato = false;
   let myVote = null;
-  let countdownHandle = null;
   let gameEventsBound = false;
-
-  function startCountdown(seconds, onExpire) {
-    clearInterval(countdownHandle);
-    let remaining = seconds;
-    UI.setTimer(remaining);
-    countdownHandle = setInterval(() => {
-      remaining -= 1;
-      UI.setTimer(Math.max(remaining, 0));
-      if (remaining <= 0) {
-        clearInterval(countdownHandle);
-        if (onExpire) onExpire();
-      }
-    }, 1000);
-  }
 
   // --- Vista home: tab crea/entra e sotto-tab codice/pubbliche --------------
 
-  function setupTabs(buttonSelector, panelSelector, dataAttr) {
+  function setupTabs(buttonSelector, panelAttr, dataAttr) {
     document.querySelectorAll(buttonSelector).forEach(btn => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll(buttonSelector).forEach(b => b.classList.remove('active'));
+        const group = btn.closest('.tab-switch');
+        group.querySelectorAll(buttonSelector).forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         const target = btn.dataset[dataAttr];
-        document.querySelectorAll(panelSelector).forEach(p => {
-          p.classList.toggle('hidden', p.dataset[dataAttr === 'tab' ? 'tabPanel' : 'subtabPanel'] !== target);
+        // i pannelli non sono necessariamente dentro lo stesso contenitore del tab-switch
+        document.querySelectorAll(`[${panelAttr}]`).forEach(p => {
+          const belongsToThisGroup = p.parentElement === group.parentElement || p.closest('.dossier') === group.closest('.dossier');
+          if (belongsToThisGroup) p.classList.toggle('hidden', p.getAttribute(panelAttr) !== target);
         });
       });
     });
   }
-  setupTabs('.tab-btn[data-tab]', '[data-tab-panel]', 'tab');
-  setupTabs('.tab-btn[data-subtab]', '[data-subtab-panel]', 'subtab');
+  setupTabs('.tab-btn[data-tab]', 'data-tab-panel', 'tab');
+  setupTabs('.tab-btn[data-subtab]', 'data-subtab-panel', 'subtab');
+  setupTabs('.tab-btn[data-stab]', 'data-stab-panel', 'stab');
 
   document.getElementById('btn-create-lobby').addEventListener('click', () => {
     const pubblica = document.getElementById('input-public-toggle').checked;
@@ -91,10 +80,15 @@
     JudgementSocket.on(E.LOBBY_SETTINGS, (settings) => {
       iAmHost = settings.hostId === JudgementSocket.getMyId();
       UI.renderLobbySettings(settings, iAmHost);
+      UI.setHostVisibilityForPauseButtons(iAmHost);
     });
 
     JudgementSocket.on(E.LOBBY_COUNTDOWN_START, ({ endsAt }) => UI.showCountdown(endsAt));
     JudgementSocket.on(E.LOBBY_COUNTDOWN_CANCEL, () => UI.hideCountdown());
+
+    JudgementSocket.on(E.LOBBY_PAUSE_STATE, ({ paused, phase, endsAt, remainingMs }) => {
+      UI.applyPauseState(phase, paused, endsAt, remainingMs);
+    });
 
     JudgementSocket.on(E.LOBBY_CLOSED, ({ reason }) => {
       alert('Il tribunale è stato chiuso (' + (reason || 'inattività') + '). Si torna alla home.');
@@ -112,9 +106,9 @@
       UI.setPhase('accusa');
     });
 
-    JudgementSocket.on(E.ROUND_YOUR_TURN, ({ imputato, roundNumber, totalRounds }) => {
+    JudgementSocket.on(E.ROUND_YOUR_TURN, ({ imputato, roundNumber, totalRounds, endsAt }) => {
       UI.setRoundLabel(roundNumber, totalRounds);
-      UI.showAccusaTurn(imputato);
+      UI.showAccusaTurn(imputato, endsAt);
     });
 
     JudgementSocket.on(E.TRIAL_STARTED, (data) => {
@@ -123,30 +117,29 @@
       UI.renderTrialAccusa(data);
       document.getElementById('evidence-difesa-card').classList.add('hidden');
       UI.setPhase(iAmImputato ? 'difesa-imputato' : 'difesa-attesa');
-      if (iAmImputato) startCountdown(JUDGEMENT_CONFIG.TIMERS.difesa, submitEmptyDifesaIfExpired);
     });
 
     JudgementSocket.on(E.TRIAL_DEFENSE_SUBMITTED, ({ difesa }) => {
-      clearInterval(countdownHandle);
       UI.showDifesaEvidence(difesa);
     });
 
-    JudgementSocket.on(E.TRIAL_VOTING_PHASE, () => {
+    JudgementSocket.on(E.TRIAL_VOTING_PHASE, ({ endsAt }) => {
       UI.setPhase('voto');
       UI.setVoteStatus('Leggi accusa e difesa, poi esprimi il tuo giudizio.');
+      UI.setVotingTimer(endsAt);
       setVoteButtonsEnabled(!iAmImputato);
-      if (!iAmImputato) startCountdown(JUDGEMENT_CONFIG.TIMERS.voto, null);
     });
 
     JudgementSocket.on(E.TRIAL_AI_JUDGING, () => {
-      clearInterval(countdownHandle);
       UI.setPhase('ai');
+      UI.clearTrialTimer();
     });
 
     JudgementSocket.on(E.TRIAL_VERDICT, (data) => {
       const votiGiuria = [...data.votiGiuria];
       if (!iAmImputato && myVote) votiGiuria.push({ giocatore: myNickname, decisione: myVote });
       UI.renderVerdict({ ...data, votiGiuria });
+      UI.applyPauseState('verdetto', false, data.endsAt);
       UI.showView('verdict');
     });
 
@@ -170,26 +163,37 @@
     JudgementSocket.on(E.ERROR, ({ message }) => UI.setHomeError(message));
   }
 
-  function submitEmptyDifesaIfExpired() {
-    const text = document.getElementById('input-difesa').value.trim() || '(l\'imputato non ha presentato una difesa in tempo)';
-    JudgementSocket.emit(E.DIFESA_SUBMIT, { text });
-  }
-
   function setVoteButtonsEnabled(enabled) {
     document.getElementById('btn-vote-assolvi').disabled = !enabled;
     document.getElementById('btn-vote-condanna').disabled = !enabled;
   }
 
-  // --- Pre-lobby: impostazioni host -------------------------------------------
+  // --- Pre-lobby: impostazioni host (tab Giocatori / Timer) -------------------
 
   document.getElementById('btn-save-settings').addEventListener('click', () => {
-    const minPlayers = parseInt(document.getElementById('input-min-players').value, 10);
-    const countdownSeconds = parseInt(document.getElementById('input-countdown-seconds').value, 10);
-    JudgementSocket.emit(E.LOBBY_SETTINGS_UPDATE, { minPlayers, countdownSeconds });
+    JudgementSocket.emit(E.LOBBY_SETTINGS_UPDATE, {
+      minPlayers: parseInt(document.getElementById('input-min-players').value, 10),
+      countdownSeconds: parseInt(document.getElementById('input-countdown-seconds').value, 10),
+      accusaTurnoSeconds: parseInt(document.getElementById('input-accusa-seconds').value, 10),
+      difesaSeconds: parseInt(document.getElementById('input-difesa-seconds').value, 10),
+      votoSeconds: parseInt(document.getElementById('input-voto-seconds').value, 10),
+      verdictSeconds: parseInt(document.getElementById('input-verdict-seconds').value, 10),
+      rematchVoteSeconds: parseInt(document.getElementById('input-rematch-seconds').value, 10),
+    });
   });
 
   document.getElementById('btn-start-now').addEventListener('click', () => {
     JudgementSocket.emit(E.LOBBY_START_NOW, {});
+  });
+
+  document.getElementById('btn-pause-countdown').addEventListener('click', () => {
+    JudgementSocket.emit(E.LOBBY_PAUSE_TOGGLE, {});
+  });
+  document.getElementById('btn-pause-trial').addEventListener('click', () => {
+    JudgementSocket.emit(E.LOBBY_PAUSE_TOGGLE, {});
+  });
+  document.getElementById('btn-pause-verdict').addEventListener('click', () => {
+    JudgementSocket.emit(E.LOBBY_PAUSE_TOGGLE, {});
   });
 
   // --- Round: deposito accusa (solo a chi ha il turno) ------------------------
@@ -207,7 +211,6 @@
   document.getElementById('btn-submit-difesa').addEventListener('click', () => {
     const text = document.getElementById('input-difesa').value.trim();
     if (!text) return;
-    clearInterval(countdownHandle);
     JudgementSocket.emit(E.DIFESA_SUBMIT, { text });
   });
 

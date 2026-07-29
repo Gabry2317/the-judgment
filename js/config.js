@@ -11,10 +11,15 @@ const JUDGEMENT_CONFIG = {
   // all'avvio, senza che chi gioca debba mai vederlo o toccarlo.
   SERVER_DISCOVERY_URL: 'https://gist.githubusercontent.com/Gabry2317/c258d2718dff7c3ede0290111efe0984/raw/judgement-server.json',
 
-  TIMERS: {
-    difesa: 90,      // secondi concessi per scrivere la difesa
-    voto: 30,        // secondi concessi per votare
-    accusaTurno: 60, // secondi concessi a chi ha il turno di accusare
+  // Valori di default e limiti (min/max) delle impostazioni configurabili
+  // dall'host — devono restare identici a TIMER_SETTINGS in backend/src/config.js
+  TIMER_SETTINGS: {
+    countdownSeconds: { def: 20, min: 5, max: 120, label: 'Attesa prima dell\'avvio automatico' },
+    accusaTurnoSeconds: { def: 60, min: 15, max: 180, label: 'Tempo per scrivere l\'accusa' },
+    difesaSeconds: { def: 90, min: 20, max: 240, label: 'Tempo per scrivere la difesa' },
+    votoSeconds: { def: 30, min: 10, max: 120, label: 'Tempo per votare' },
+    verdictSeconds: { def: 8, min: 3, max: 10, label: 'Verdetto a schermo prima del round successivo' },
+    rematchVoteSeconds: { def: 20, min: 10, max: 90, label: 'Tempo per votare la rivincita' },
   },
 
   EVENTS: {
@@ -24,6 +29,7 @@ const JUDGEMENT_CONFIG = {
     LOBBY_LIST_PUBLIC: 'lobby:list_public',
     LOBBY_SETTINGS_UPDATE: 'lobby:settings_update',
     LOBBY_START_NOW: 'lobby:start_now',
+    LOBBY_PAUSE_TOGGLE: 'lobby:pause_toggle',
     ACCUSA_SUBMIT: 'accusa:submit',
     DIFESA_SUBMIT: 'difesa:submit',
     VOTO_CAST: 'voto:cast',
@@ -36,6 +42,7 @@ const JUDGEMENT_CONFIG = {
     LOBBY_SETTINGS: 'lobby:settings',
     LOBBY_COUNTDOWN_START: 'lobby:countdown_start',
     LOBBY_COUNTDOWN_CANCEL: 'lobby:countdown_cancel',
+    LOBBY_PAUSE_STATE: 'lobby:pause_state',
     LOBBY_CLOSED: 'lobby:closed',
     MATCH_STARTED: 'match:started',
     ROUND_YOUR_TURN: 'round:your_turn',
