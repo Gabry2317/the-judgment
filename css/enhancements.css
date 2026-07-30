@@ -1,0 +1,216 @@
+/* =====================================================================
+   The Judgement — stili delle funzioni di comodità (enhancements.js).
+   Solo presentazione: toast, chip, barre timer, contatori, scorciatoie.
+   ===================================================================== */
+
+/* ---- Toast ------------------------------------------------------- */
+.toast-wrap {
+  position: fixed;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  pointer-events: none;
+  width: min(94vw, 460px);
+}
+
+.toast {
+  pointer-events: auto;
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: #f4ecd8;
+  background: rgba(16, 22, 34, 0.94);
+  border: 1px solid rgba(239, 215, 155, 0.35);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  transform: translateY(-12px) scale(0.96);
+  transition: opacity 0.28s ease, transform 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.4);
+  text-align: center;
+}
+.toast.show { opacity: 1; transform: translateY(0) scale(1); }
+.toast-ok  { border-color: rgba(126, 200, 141, 0.55); box-shadow: 0 12px 30px rgba(0,0,0,.45), 0 0 20px rgba(126,200,141,.18); }
+.toast-bad { border-color: rgba(214, 110, 96, 0.6);  box-shadow: 0 12px 30px rgba(0,0,0,.45), 0 0 20px rgba(214,110,96,.2); }
+
+/* ---- Interruttore audio nell'intestazione ------------------------ */
+.icon-toggle {
+  margin-left: 10px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid rgba(239, 215, 155, 0.3);
+  background: rgba(255, 255, 255, 0.05);
+  color: inherit;
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+}
+.icon-toggle:hover { transform: scale(1.08); background: rgba(239, 215, 155, 0.16); border-color: rgba(239, 215, 155, 0.6); }
+.icon-toggle:active { transform: scale(0.94); }
+
+/* stato connessione più leggibile */
+#connection-status.is-live::before,
+#connection-status.is-demo::before {
+  content: '';
+  display: inline-block;
+  width: 7px; height: 7px;
+  margin-right: 6px;
+  border-radius: 50%;
+  vertical-align: middle;
+}
+#connection-status.is-live::before { background: #7ec88d; box-shadow: 0 0 8px #7ec88d; animation: pulse-dot 1.8s ease-in-out infinite; }
+#connection-status.is-demo::before { background: #efd79b; box-shadow: 0 0 8px rgba(239,215,155,.7); }
+@keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+/* ---- Chip / azioni rapide ---------------------------------------- */
+.share-row,
+.preset-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 10px 0 4px;
+}
+
+.chip-btn {
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 7px 13px;
+  border-radius: 999px;
+  cursor: pointer;
+  color: #2b3a55;
+  background: rgba(43, 58, 85, 0.07);
+  border: 1px solid rgba(43, 58, 85, 0.25);
+  transition: transform 0.16s ease, background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+}
+.chip-btn:hover {
+  transform: translateY(-2px);
+  background: rgba(217, 185, 106, 0.28);
+  border-color: rgba(43, 58, 85, 0.5);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+}
+.chip-btn:active { transform: translateY(0) scale(0.97); }
+
+.preset-caption {
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.65;
+  width: 100%;
+}
+.preset-btn { display: inline-flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
+.preset-btn small { font-size: 0.65rem; font-weight: 500; opacity: 0.65; text-transform: none; letter-spacing: 0; }
+
+.estimate-hint { margin-top: 12px; font-style: italic; opacity: 0.75; }
+
+/* ---- Presenze in lobby ------------------------------------------- */
+.presence-chip {
+  margin: 6px 0 2px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #8a6d2f;
+}
+.presence-chip.ready { color: #2f7a45; }
+.presence-chip:empty { display: none; }
+
+#player-list li.is-me { position: relative; }
+.tag-me {
+  margin-left: 8px;
+  color: #6b5416;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(239, 215, 155, 0.18);
+  border: 1px solid rgba(239, 215, 155, 0.4);
+  background: rgba(217, 185, 106, 0.3);
+  border-color: rgba(43, 58, 85, 0.3);
+}
+
+/* ---- Barre dei timer --------------------------------------------- */
+.timer-bar {
+  display: none;
+  height: 5px;
+  margin: 8px 0 4px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+.timer-bar.active { display: block; }
+.timer-bar > span {
+  display: block;
+  height: 100%;
+  width: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #d9b96a, #efd79b);
+  box-shadow: 0 0 10px rgba(239, 215, 155, 0.45);
+  transition: width 0.2s linear, background 0.3s ease;
+}
+.timer-bar.warn > span   { background: linear-gradient(90deg, #d9a05a, #f0c98a); }
+.timer-bar.danger > span { background: linear-gradient(90deg, #c9553f, #e58a74); box-shadow: 0 0 12px rgba(214, 110, 96, 0.55); }
+.timer-bar.paused > span { opacity: 0.45; background: linear-gradient(90deg, #6c7a91, #97a5b8); }
+
+#trial-timer.is-urgent,
+#verdict-timer.is-urgent,
+#matchend-timer.is-urgent,
+#rivincta-timer.is-urgent,
+#lobby-countdown-text.is-urgent {
+  color: #ec9280;
+  font-weight: 800;
+  display: inline-block;
+  animation: urgent-beat 1s ease-in-out infinite;
+}
+@keyframes urgent-beat {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.18); }
+}
+
+/* ---- Contatore caratteri e scorciatoie ---------------------------- */
+.field { position: relative; }
+.char-counter {
+  display: block;
+  margin-top: 6px;
+  text-align: right;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  opacity: 0.55;
+}
+.char-counter.near { opacity: 0.95; color: #ec9280; }
+
+.shortcut-hint { margin-top: 10px; font-size: 0.72rem; opacity: 0.6; }
+.shortcut-hint kbd {
+  color: #2b3a55;
+  display: inline-block;
+  padding: 1px 6px;
+  margin: 0 1px;
+  border-radius: 5px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.7rem;
+  background: rgba(43, 58, 85, 0.1);
+  border: 1px solid rgba(43, 58, 85, 0.25);
+}
+
+button:disabled { opacity: 0.45; cursor: not-allowed; transform: none !important; }
+
+@media (max-width: 480px) {
+  .share-row .chip-btn, .preset-row .chip-btn { flex: 1 1 auto; justify-content: center; text-align: center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast, .chip-btn, .timer-bar > span { transition: none; }
+  #trial-timer.is-urgent, #verdict-timer.is-urgent, #matchend-timer.is-urgent,
+  #rivincta-timer.is-urgent, #lobby-countdown-text.is-urgent,
+  #connection-status.is-live::before { animation: none; }
+}
