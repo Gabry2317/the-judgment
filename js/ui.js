@@ -109,6 +109,7 @@ const UI = (() => {
     countdown: { timerEl: 'lobby-countdown-text', btnId: 'btn-pause-countdown', bannerId: null },
     accusa: { timerEl: 'trial-timer', btnId: 'btn-pause-trial', bannerId: 'pause-banner' },
     difesa: { timerEl: 'trial-timer', btnId: 'btn-pause-trial', bannerId: 'pause-banner' },
+    imprevisto: { timerEl: 'trial-timer', btnId: 'btn-pause-trial', bannerId: 'pause-banner' },
     voto: { timerEl: 'trial-timer', btnId: 'btn-pause-trial', bannerId: 'pause-banner' },
     verdetto: { timerEl: 'verdict-timer', btnId: 'btn-pause-verdict', bannerId: 'pause-banner-verdict' },
     match_end: { timerEl: 'matchend-timer', btnId: 'btn-pause-matchend', bannerId: 'pause-banner-matchend' },
@@ -178,11 +179,13 @@ const UI = (() => {
   }
 
   function setPhase(phase) {
-    const map = { accusa: 'accusa', difesa: 'difesa', voto: 'voto della giuria', ai: 'giudizio AI' };
+    const map = { accusa: 'accusa', difesa: 'difesa', imprevisto: 'imprevisto', voto: 'voto della giuria', ai: 'giudizio AI' };
     document.getElementById('trial-phase-label').textContent = map[phase] || phase;
 
     document.getElementById('defense-writer').classList.toggle('hidden', phase !== 'difesa-imputato');
     document.getElementById('defense-waiting').classList.toggle('hidden', phase !== 'difesa-attesa');
+    document.getElementById('imprevisto-waiting').classList.toggle('hidden', phase !== 'imprevisto-attesa');
+    document.getElementById('giornalista-writer').classList.toggle('hidden', phase !== 'imprevisto-giornalista');
     document.getElementById('jury-voting').classList.toggle('hidden', phase !== 'voto');
     document.getElementById('ai-judging').classList.toggle('hidden', phase !== 'ai');
   }
@@ -190,6 +193,63 @@ const UI = (() => {
   function showDifesaEvidence(text) {
     document.getElementById('evidence-difesa-card').classList.remove('hidden');
     document.getElementById('trial-difesa-text').textContent = text;
+  }
+
+  // --- Imprevisti ----------------------------------------------------------
+
+  function showImprevistoWaiting(tipo, autore) {
+    const el = document.getElementById('imprevisto-waiting-text');
+    const dots = '<span class="dots"><span>.</span><span>.</span><span>.</span></span>';
+    el.innerHTML = tipo === 'foto'
+      ? `Lia sta sviluppando una foto appena depositata agli atti${dots}`
+      : `${escapeHtml(autore || 'Un cronista')} sta scrivendo un titolo di giornale sul caso${dots}`;
+    document.getElementById('evidence-imprevisto-card').classList.add('hidden');
+  }
+
+  // Il cronista non ha libertà di parola: puo' solo riempire gli spazi vuoti
+  // del titolo scriptato. Qui costruiamo la frase alternando testo e input.
+  function renderGiornalistaTemplate(parts) {
+    const wrap = document.getElementById('giornalista-template');
+    wrap.innerHTML = '';
+    parts.forEach((part, i) => {
+      wrap.appendChild(document.createTextNode(part));
+      if (i < parts.length - 1) {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'blank-input';
+        input.maxLength = 120;
+        input.dataset.blankIndex = String(i);
+        input.placeholder = '...';
+        wrap.appendChild(input);
+      }
+    });
+  }
+
+  function readGiornalistaBlanks() {
+    return [...document.querySelectorAll('#giornalista-template .blank-input')].map(i => i.value);
+  }
+
+  function showImprevistoEvidence({ tipo, testo, autore }) {
+    const card = document.getElementById('evidence-imprevisto-card');
+    card.classList.remove('hidden');
+    document.getElementById('imprevisto-label').textContent = tipo === 'foto'
+      ? '📷 Foto agli atti (descritta da Lia)'
+      : `📰 Titolo di giornale${autore ? ' — cronista: ' + autore : ''}`;
+    document.getElementById('imprevisto-text').textContent = testo || '-';
+  }
+
+  function renderRecapImprevisto(imprevisto) {
+    const card = document.getElementById('recap-imprevisto-card');
+    if (!card) return;
+    if (!imprevisto || !imprevisto.testo) {
+      card.classList.add('hidden');
+      return;
+    }
+    card.classList.remove('hidden');
+    document.getElementById('recap-imprevisto-label').textContent = imprevisto.tipo === 'foto'
+      ? '📷 Imprevisto: foto agli atti (Lia)'
+      : `📰 Imprevisto: titolo di giornale${imprevisto.autore ? ' — ' + imprevisto.autore : ''}`;
+    document.getElementById('recap-imprevisto-text').textContent = imprevisto.testo;
   }
 
   function setVotingTimer(endsAt) {
@@ -207,9 +267,10 @@ const UI = (() => {
     document.getElementById('vote-status').textContent = text;
   }
 
-  function renderVerdict({ accusa, difesa, votiGiuria, votoAI, motivazioneAI, esitoFinale, orientamentoGiuria, ribaltamento }) {
+  function renderVerdict({ accusa, difesa, imprevisto, votiGiuria, votoAI, motivazioneAI, esitoFinale, orientamentoGiuria, ribaltamento }) {
     document.getElementById('recap-accusa').textContent = accusa;
     document.getElementById('recap-difesa').textContent = difesa;
+    renderRecapImprevisto(imprevisto);
     document.getElementById('recap-ai-motivazione').textContent = motivazioneAI;
     document.getElementById('recap-ai-voto').textContent = votoAI === 'assolvi' ? 'ASSOLVE' : 'CONDANNA';
 
@@ -335,6 +396,7 @@ const UI = (() => {
     renderLobbySettings, showCountdown, hideCountdown, setHostVisibilityForPauseButtons, applyPauseState,
     setRoundLabel, showAccusaTurn, showAccusaWaiting,
     renderTrialAccusa, setPhase, showDifesaEvidence, setVotingTimer, clearTrialTimer,
+    showImprevistoWaiting, renderGiornalistaTemplate, readGiornalistaBlanks, showImprevistoEvidence,
     setVoteStatus, renderVerdict,
     renderMatchEnd, setMatchEndStatus,
     renderRematchVote, setRematchStatus, setRematchButtonsEnabled,
