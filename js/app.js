@@ -144,6 +144,15 @@
       UI.showView('match-end');
     });
 
+    JudgementSocket.on(E.LOBBY_RETURN, ({ code, players, settings }) => {
+      UI.renderLobby(code, players);
+      iAmHost = settings.hostId === JudgementSocket.getMyId();
+      UI.renderLobbySettings(settings, iAmHost);
+      UI.setHostVisibilityForPauseButtons(iAmHost);
+      UI.hideCountdown();
+      UI.showView('lobby');
+    });
+
     JudgementSocket.on(E.ERROR, ({ message }) => UI.setHomeError(message));
   }
 

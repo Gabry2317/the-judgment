@@ -51,6 +51,7 @@ const JUDGEMENT_CONFIG = {
     TRIAL_AI_JUDGING: 'trial:ai_judging',
     TRIAL_VERDICT: 'trial:verdict',
     MATCH_ENDED: 'match:ended',
+    LOBBY_RETURN: 'lobby:return',
     ERROR: 'error',
   },
 };
