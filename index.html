@@ -260,6 +260,7 @@
       <!-- Sotto-vista: voto della giuria -->
       <div id="jury-voting" class="hidden">
         <h2 class="section-title">Il tuo verdetto</h2>
+        <p class="hint">Il tuo voto orienta il giudice, ma la sentenza finale spetta a lui.</p>
         <div class="verdict-buttons">
           <button class="btn btn-verdict btn-assolvi" id="btn-vote-assolvi">Assolvi</button>
           <button class="btn btn-verdict btn-condanna" id="btn-vote-condanna">Condanna</button>
@@ -294,13 +295,14 @@
         <p class="evidence-body" id="recap-difesa">-</p>
       </div>
 
-      <h2 class="section-title">Voti della giuria</h2>
+      <h2 class="section-title">Orientamento della giuria</h2>
       <ul class="vote-list" id="recap-vote-list"></ul>
 
       <div class="evidence-card evidence-ai">
-        <p class="evidence-label">Giudizio del giudice AI</p>
+        <p class="evidence-label">Sentenza del giudice AI (decisione finale)</p>
         <p class="evidence-body" id="recap-ai-motivazione">-</p>
-        <p class="evidence-footer">voto AI: <strong id="recap-ai-voto">-</strong></p>
+        <p class="evidence-footer">sentenza: <strong id="recap-ai-voto">-</strong></p>
+        <p class="evidence-footer hidden" id="recap-ai-override"></p>
       </div>
 
       <div class="actions">

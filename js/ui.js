@@ -207,11 +207,24 @@ const UI = (() => {
     document.getElementById('vote-status').textContent = text;
   }
 
-  function renderVerdict({ accusa, difesa, votiGiuria, votoAI, motivazioneAI, esitoFinale }) {
+  function renderVerdict({ accusa, difesa, votiGiuria, votoAI, motivazioneAI, esitoFinale, orientamentoGiuria, ribaltamento }) {
     document.getElementById('recap-accusa').textContent = accusa;
     document.getElementById('recap-difesa').textContent = difesa;
     document.getElementById('recap-ai-motivazione').textContent = motivazioneAI;
-    document.getElementById('recap-ai-voto').textContent = votoAI === 'assolvi' ? 'favorevole' : 'contrario';
+    document.getElementById('recap-ai-voto').textContent = votoAI === 'assolvi' ? 'ASSOLVE' : 'CONDANNA';
+
+    const overrideEl = document.getElementById('recap-ai-override');
+    if (overrideEl) {
+      if (ribaltamento) {
+        overrideEl.textContent = orientamentoGiuria === 'assolto'
+          ? '⚖️ La giuria era favorevole, ma il giudice ha ribaltato il verdetto: decide lui.'
+          : '⚖️ La giuria era contraria, ma il giudice ha ribaltato il verdetto: decide lui.';
+        overrideEl.classList.remove('hidden');
+      } else {
+        overrideEl.textContent = '';
+        overrideEl.classList.add('hidden');
+      }
+    }
 
     const list = document.getElementById('recap-vote-list');
     list.innerHTML = '';

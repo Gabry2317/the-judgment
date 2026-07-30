@@ -107,15 +107,23 @@ function createMockServer() {
       const imputato = state.players.find(p => p.id === trial.imputatoId);
       const jurors = state.players.filter(p => p.id !== trial.imputatoId && p.id !== 'me');
       const botVotes = jurors.map(p => ({ giocatore: p.nome, decisione: Math.random() > 0.5 ? 'assolvi' : 'condanna' }));
-      const aiFavorevole = Math.random() > 0.4;
-      const votoAI = aiFavorevole ? 'assolvi' : 'condanna';
-
-      let condanne = botVotes.filter(v => v.decisione === 'condanna').length + (votoAI === 'condanna' ? 1 : 0);
-      let assoluzioni = botVotes.filter(v => v.decisione === 'assolvi').length + (votoAI === 'assolvi' ? 1 : 0);
+      let condanne = botVotes.filter(v => v.decisione === 'condanna').length;
+      let assoluzioni = botVotes.filter(v => v.decisione === 'assolvi').length;
       if (trial.imputatoId !== 'me' && trial.playerVote) {
         if (trial.playerVote === 'condanna') condanne += 1; else assoluzioni += 1;
       }
-      const esitoFinale = condanne > assoluzioni ? 'colpevole' : 'assolto';
+      const orientamentoGiuria = condanne > assoluzioni ? 'colpevole' : assoluzioni > condanne ? 'assolto' : 'parita';
+
+      // Il giudice tende a seguire la giuria, ma puo' ribaltarla.
+      const segueGiuria = Math.random() > 0.25;
+      const aiFavorevole = orientamentoGiuria === 'parita'
+        ? Math.random() > 0.4
+        : segueGiuria ? orientamentoGiuria === 'assolto' : orientamentoGiuria === 'colpevole';
+      const votoAI = aiFavorevole ? 'assolvi' : 'condanna';
+
+      // La sentenza del giudice E' l'esito finale.
+      const esitoFinale = votoAI === 'condanna' ? 'colpevole' : 'assolto';
+      const ribaltamento = orientamentoGiuria !== 'parita' && orientamentoGiuria !== esitoFinale;
 
       if (!state.scoreboard.has(imputato.nome)) state.scoreboard.set(imputato.nome, { nome: imputato.nome, matches: [] });
       const entry = state.scoreboard.get(imputato.nome);
@@ -127,10 +135,13 @@ function createMockServer() {
         difesa: trial.difesa,
         votiGiuria: botVotes,
         votoAI,
-        motivazioneAI: aiFavorevole
-          ? 'La difesa presenta una spiegazione coerente e plausibile; non emergono contraddizioni sostanziali nella ricostruzione dei fatti.'
-          : 'La difesa non affronta in modo convincente il punto centrale dell\'accusa e presenta incongruenze logiche.',
+        motivazioneAI: (ribaltamento ? 'Questa corte si discosta dall\'orientamento della giuria: la legge e la logica impongono altro. ' : '')
+          + (aiFavorevole
+            ? 'La difesa presenta una spiegazione coerente e plausibile; non emergono contraddizioni sostanziali nella ricostruzione dei fatti.'
+            : 'La difesa non affronta in modo convincente il punto centrale dell\'accusa e presenta incongruenze logiche.'),
         esitoFinale,
+        orientamentoGiuria,
+        ribaltamento,
         endsAt: Date.now() + state.settings.verdictSeconds * 1000,
       });
 
