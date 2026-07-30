@@ -96,12 +96,14 @@
     });
 
     JudgementSocket.on(E.ROUND_WAITING, ({ roundNumber, totalRounds }) => {
+      UI.showView('trial');
       UI.setRoundLabel(roundNumber, totalRounds);
       UI.showAccusaWaiting();
       UI.setPhase('accusa');
     });
 
     JudgementSocket.on(E.ROUND_YOUR_TURN, ({ imputato, roundNumber, totalRounds, endsAt }) => {
+      UI.showView('trial');
       UI.setRoundLabel(roundNumber, totalRounds);
       UI.showAccusaTurn(imputato, endsAt);
     });
