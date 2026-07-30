@@ -27,7 +27,7 @@ function createMockServer() {
     state = {
       code: Math.random().toString(36).slice(2, 8).toUpperCase(),
       players: [{ id: 'me', nome: nickname }, ...BOT_NAMES.map((n, i) => ({ id: 'bot' + i, nome: n }))],
-      settings: { minPlayers: 3, countdownSeconds: 3, accusaTurnoSeconds: 60, difesaSeconds: 90, votoSeconds: 30, verdictSeconds: 8, matchEndSeconds: 10 },
+      settings: { minPlayers: 3, countdownSeconds: 3, accusaTurnoSeconds: 60, difesaSeconds: 90, votoSeconds: 30, verdictSeconds: 8, matchEndSeconds: 10, rivinctaSeconds: 8 },
       scoreboard: new Map(),
       matchNumber: 0,
       order: [],
@@ -144,7 +144,27 @@ function createMockServer() {
     const scoreboard = [...state.scoreboard.values()].map(e => ({ nome: e.nome, matches: e.matches.slice() }));
     const endsAt = Date.now() + state.settings.matchEndSeconds * 1000;
     emitToClient(E.MATCH_ENDED, { matchNumber: state.matchNumber, scoreboard, endsAt });
-    setTimeout(() => startMatch(), state.settings.matchEndSeconds * 1000);
+    setTimeout(() => startRematchVote(), state.settings.matchEndSeconds * 1000);
+  }
+
+  // I bot della demo votano sempre "sì" alla rivincita, per riprodurre il
+  // comportamento tipico: si continua sempre a giocare finché qualcuno (il
+  // giocatore reale) non decide di fermarsi.
+  function startRematchVote() {
+    const rivinctaSeconds = state.settings.rivinctaSeconds || 15;
+    const endsAt = Date.now() + rivinctaSeconds * 1000;
+    emitToClient(E.REMATCH_PHASE, { endsAt });
+    state.rematchHandle = setTimeout(() => startMatch(), rivinctaSeconds * 1000);
+  }
+
+  function castRematchVote(vuole) {
+    if (vuole === 'no') {
+      clearTimeout(state.rematchHandle);
+      resetLobby(state.players[0].nome);
+      startPreLobby();
+    }
+    // "sì" non fa nulla di speciale: si aspetta semplicemente lo scadere del
+    // timer (o il voto "no"), come lato server reale.
   }
 
   return {
@@ -164,6 +184,7 @@ function createMockServer() {
       }
       if (event === E.DIFESA_SUBMIT) submitDifesa(payload.text);
       if (event === E.VOTO_CAST && state.trial) state.trial.playerVote = payload.decisione;
+      if (event === E.REMATCH_CAST) castRematchVote(payload.vuole);
       if (event === E.LOBBY_LIST_PUBLIC) {
         setTimeout(() => emitToClient(E.LOBBY_LIST_RESULT, { lobbies: FAKE_PUBLIC_LOBBIES }), 400);
       }

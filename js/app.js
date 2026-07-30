@@ -140,8 +140,12 @@
 
     JudgementSocket.on(E.MATCH_ENDED, ({ matchNumber, scoreboard, endsAt }) => {
       UI.renderMatchEnd(matchNumber, scoreboard, endsAt);
-      UI.setMatchEndStatus('La prossima partita parte in automatico. Se restate in pochi si torna in attesa di altri giocatori.');
+      UI.setMatchEndStatus('Tra poco si vota per la rivincita.');
       UI.showView('match-end');
+    });
+
+    JudgementSocket.on(E.REMATCH_PHASE, ({ endsAt }) => {
+      UI.renderRematchVote(endsAt);
     });
 
     JudgementSocket.on(E.LOBBY_RETURN, ({ code, players, settings }) => {
@@ -172,6 +176,7 @@
       votoSeconds: parseInt(document.getElementById('input-voto-seconds').value, 10),
       verdictSeconds: parseInt(document.getElementById('input-verdict-seconds').value, 10),
       matchEndSeconds: parseInt(document.getElementById('input-matchend-seconds').value, 10),
+      rivinctaSeconds: parseInt(document.getElementById('input-rivincta-seconds').value, 10),
     });
   });
 
@@ -189,6 +194,9 @@
     JudgementSocket.emit(E.LOBBY_PAUSE_TOGGLE, {});
   });
   document.getElementById('btn-pause-matchend').addEventListener('click', () => {
+    JudgementSocket.emit(E.LOBBY_PAUSE_TOGGLE, {});
+  });
+  document.getElementById('btn-pause-rivincta').addEventListener('click', () => {
     JudgementSocket.emit(E.LOBBY_PAUSE_TOGGLE, {});
   });
 
@@ -219,6 +227,17 @@
     JudgementSocket.emit(E.VOTO_CAST, { decisione });
     setVoteButtonsEnabled(false);
     UI.setVoteStatus('Voto registrato: ' + (decisione === 'assolvi' ? 'assolvi' : 'condanna') + '. In attesa degli altri.');
+  }
+
+  // --- Fine partita: voto rivincita --------------------------------------
+
+  document.getElementById('btn-rematch-si').addEventListener('click', () => castRematchVote('si'));
+  document.getElementById('btn-rematch-no').addEventListener('click', () => castRematchVote('no'));
+
+  function castRematchVote(vuole) {
+    JudgementSocket.emit(E.REMATCH_CAST, { vuole });
+    UI.setRematchButtonsEnabled(false);
+    UI.setRematchStatus(vuole === 'si' ? 'Hai votato: rivincita! In attesa degli altri.' : 'Hai votato: basta così. In attesa degli altri.');
   }
 
   // --- Fine partita: si riparte in automatico, niente da fare qui -------------

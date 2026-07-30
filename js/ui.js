@@ -49,6 +49,7 @@ const UI = (() => {
       document.getElementById('input-voto-seconds').value = settings.votoSeconds;
       document.getElementById('input-verdict-seconds').value = settings.verdictSeconds;
       document.getElementById('input-matchend-seconds').value = settings.matchEndSeconds;
+      document.getElementById('input-rivincta-seconds').value = settings.rivinctaSeconds;
     } else {
       document.getElementById('lobby-settings-readonly').innerHTML =
         `Minimo <strong>${settings.minPlayers}</strong> giocatori, avvio dopo <strong>${settings.countdownSeconds}s</strong> di attesa.<br>
@@ -56,7 +57,8 @@ const UI = (() => {
          difesa <strong>${settings.difesaSeconds}s</strong> &middot;
          voto <strong>${settings.votoSeconds}s</strong> &middot;
          verdetto <strong>${settings.verdictSeconds}s</strong> &middot;
-         classifica <strong>${settings.matchEndSeconds}s</strong>.`;
+         classifica <strong>${settings.matchEndSeconds}s</strong> &middot;
+         voto rivincita <strong>${settings.rivinctaSeconds}s</strong>.`;
     }
   }
 
@@ -90,6 +92,7 @@ const UI = (() => {
     tickTimerElement(document.getElementById('lobby-countdown-text'));
     tickTimerElement(document.getElementById('matchend-timer'));
     tickTimerElement(document.getElementById('verdict-timer'));
+    tickTimerElement(document.getElementById('rivincta-timer'));
   }, 500);
 
   function showCountdown(endsAt) {
@@ -109,6 +112,7 @@ const UI = (() => {
     voto: { timerEl: 'trial-timer', btnId: 'btn-pause-trial', bannerId: 'pause-banner' },
     verdetto: { timerEl: 'verdict-timer', btnId: 'btn-pause-verdict', bannerId: 'pause-banner-verdict' },
     match_end: { timerEl: 'matchend-timer', btnId: 'btn-pause-matchend', bannerId: 'pause-banner-matchend' },
+    rivincita: { timerEl: 'rivincta-timer', btnId: 'btn-pause-rivincta', bannerId: 'pause-banner-rivincta' },
   };
 
   function setHostVisibilityForPauseButtons(isHost) {
@@ -278,10 +282,33 @@ const UI = (() => {
     document.getElementById('pause-banner-matchend').classList.add('hidden');
     setMatchEndStatus('');
     setTimerRunning(document.getElementById('matchend-timer'), endsAt);
+
+    document.getElementById('matchend-countdown-block').classList.remove('hidden');
+    document.getElementById('rematch-vote-block').classList.add('hidden');
   }
 
   function setMatchEndStatus(text) {
     document.getElementById('matchend-status').textContent = text;
+  }
+
+  // --- Fase di voto rivincita, subito dopo la classifica --------------------
+
+  function renderRematchVote(endsAt) {
+    document.getElementById('matchend-countdown-block').classList.add('hidden');
+    document.getElementById('rematch-vote-block').classList.remove('hidden');
+    document.getElementById('pause-banner-rivincta').classList.add('hidden');
+    setRematchStatus('');
+    setRematchButtonsEnabled(true);
+    setTimerRunning(document.getElementById('rivincta-timer'), endsAt);
+  }
+
+  function setRematchStatus(text) {
+    document.getElementById('rematch-status').textContent = text;
+  }
+
+  function setRematchButtonsEnabled(enabled) {
+    document.getElementById('btn-rematch-si').disabled = !enabled;
+    document.getElementById('btn-rematch-no').disabled = !enabled;
   }
 
   function escapeHtml(str) {
@@ -297,5 +324,6 @@ const UI = (() => {
     renderTrialAccusa, setPhase, showDifesaEvidence, setVotingTimer, clearTrialTimer,
     setVoteStatus, renderVerdict,
     renderMatchEnd, setMatchEndStatus,
+    renderRematchVote, setRematchStatus, setRematchButtonsEnabled,
   };
 })();
