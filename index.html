@@ -257,6 +257,32 @@
         <p class="evidence-body" id="trial-difesa-text">-</p>
       </div>
 
+      <!-- IMPREVISTI: colpo di scena tra difesa e voto ----------------------->
+
+      <!-- In attesa che l'imprevisto si materializzi -->
+      <div id="imprevisto-waiting" class="hidden">
+        <p class="hint typing-indicator" id="imprevisto-waiting-text">Colpo di scena in aula<span class="dots"><span>.</span><span>.</span><span>.</span></span></p>
+      </div>
+
+      <!-- Tocca a te: sei il cronista, riempi gli spazi vuoti -->
+      <div id="giornalista-writer" class="hidden">
+        <h2 class="section-title">Edizione straordinaria: tocca a te</h2>
+        <p class="hint">Sei il cronista di questo processo. Non puoi scrivere l'articolo da zero: completa solo gli spazi vuoti del titolo già impaginato.</p>
+        <div class="evidence-card evidence-giornalista">
+          <p class="evidence-label">Titolo da completare</p>
+          <p class="evidence-body" id="giornalista-template"></p>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary" id="btn-submit-giornalista">Manda in stampa</button>
+        </div>
+      </div>
+
+      <!-- Imprevisto rivelato: foto di Lia o titolo del cronista -->
+      <div class="evidence-card evidence-imprevisto hidden" id="evidence-imprevisto-card">
+        <p class="evidence-label" id="imprevisto-label">Imprevisto</p>
+        <p class="evidence-body" id="imprevisto-text">-</p>
+      </div>
+
       <!-- Sotto-vista: voto della giuria -->
       <div id="jury-voting" class="hidden">
         <h2 class="section-title">Il tuo verdetto</h2>
@@ -293,6 +319,11 @@
       <div class="evidence-card evidence-difesa">
         <p class="evidence-label">Difesa</p>
         <p class="evidence-body" id="recap-difesa">-</p>
+      </div>
+
+      <div class="evidence-card evidence-imprevisto hidden" id="recap-imprevisto-card">
+        <p class="evidence-label" id="recap-imprevisto-label">Imprevisto</p>
+        <p class="evidence-body" id="recap-imprevisto-text">-</p>
       </div>
 
       <h2 class="section-title">Orientamento della giuria</h2>
