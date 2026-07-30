@@ -120,6 +120,25 @@
       UI.showDifesaEvidence(difesa);
     });
 
+    JudgementSocket.on(E.TRIAL_IMPREVISTO_PENDING, ({ tipo, autore, endsAt }) => {
+      UI.setPhase('imprevisto-attesa');
+      UI.showImprevistoWaiting(tipo, autore);
+      if (endsAt) UI.setVotingTimer(endsAt); else UI.clearTrialTimer();
+    });
+
+    JudgementSocket.on(E.TRIAL_IMPREVISTO_GIORNALISTA_TURN, ({ parts, endsAt }) => {
+      UI.renderGiornalistaTemplate(parts);
+      UI.setPhase('imprevisto-giornalista');
+      setGiornalistaButtonEnabled(true);
+      if (endsAt) UI.setVotingTimer(endsAt);
+    });
+
+    JudgementSocket.on(E.TRIAL_IMPREVISTO_REVEAL, (data) => {
+      UI.setPhase('imprevisto');
+      UI.showImprevistoEvidence(data);
+      UI.clearTrialTimer();
+    });
+
     JudgementSocket.on(E.TRIAL_VOTING_PHASE, ({ endsAt }) => {
       UI.setPhase('voto');
       UI.setVoteStatus('Leggi accusa e difesa, poi esprimi il tuo giudizio.');
@@ -163,7 +182,12 @@
   }
 
   function setVoteButtonsEnabled(enabled) {
-    document.getElementById('btn-vote-assolvi').disabled = !enabled;
+    document.getElementById('btn-submit-giornalista').addEventListener('click', () => {
+    setGiornalistaButtonEnabled(false);
+    JudgementSocket.emit(E.IMPREVISTO_GIORNALISTA_SUBMIT, { blanks: UI.readGiornalistaBlanks() });
+  });
+
+  document.getElementById('btn-vote-assolvi').disabled = !enabled;
     document.getElementById('btn-vote-condanna').disabled = !enabled;
   }
 
@@ -213,6 +237,10 @@
   });
 
   // --- Vista processo: difesa e voto -----------------------------------------
+
+  function setGiornalistaButtonEnabled(enabled) {
+    document.getElementById('btn-submit-giornalista').disabled = !enabled;
+  }
 
   document.getElementById('btn-submit-difesa').addEventListener('click', () => {
     const text = document.getElementById('input-difesa').value.trim();
