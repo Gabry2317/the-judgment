@@ -27,7 +27,7 @@ function createMockServer() {
     state = {
       code: Math.random().toString(36).slice(2, 8).toUpperCase(),
       players: [{ id: 'me', nome: nickname }, ...BOT_NAMES.map((n, i) => ({ id: 'bot' + i, nome: n }))],
-      settings: { minPlayers: 3, countdownSeconds: 3, accusaTurnoSeconds: 60, difesaSeconds: 90, votoSeconds: 30, verdictSeconds: 8, rematchVoteSeconds: 20 },
+      settings: { minPlayers: 3, countdownSeconds: 3, accusaTurnoSeconds: 60, difesaSeconds: 90, votoSeconds: 30, verdictSeconds: 8, matchEndSeconds: 10 },
       scoreboard: new Map(),
       matchNumber: 0,
       order: [],
@@ -142,19 +142,9 @@ function createMockServer() {
   function endMatch() {
     state.matchInProgress = false;
     const scoreboard = [...state.scoreboard.values()].map(e => ({ nome: e.nome, matches: e.matches.slice() }));
-    emitToClient(E.MATCH_ENDED, { matchNumber: state.matchNumber, scoreboard });
-    setTimeout(() => {
-      const endsAt = Date.now() + 15000;
-      emitToClient(E.REMATCH_VOTE_START, { endsAt });
-      // i bot votano sempre di sì in demo, per non interrompere l'esperienza
-      setTimeout(() => {
-        const playerVote = state.pendingRematchVote;
-        const yes = 2 + (playerVote === true ? 1 : 0);
-        const no = playerVote === false ? 1 : 0;
-        emitToClient(E.REMATCH_RESULT, { again: true, yes, no });
-        startMatch();
-      }, 1500);
-    }, 1500);
+    const endsAt = Date.now() + state.settings.matchEndSeconds * 1000;
+    emitToClient(E.MATCH_ENDED, { matchNumber: state.matchNumber, scoreboard, endsAt });
+    setTimeout(() => startMatch(), state.settings.matchEndSeconds * 1000);
   }
 
   return {
@@ -174,7 +164,6 @@ function createMockServer() {
       }
       if (event === E.DIFESA_SUBMIT) submitDifesa(payload.text);
       if (event === E.VOTO_CAST && state.trial) state.trial.playerVote = payload.decisione;
-      if (event === E.REMATCH_VOTE_CAST) state.pendingRematchVote = !!payload.vote;
       if (event === E.LOBBY_LIST_PUBLIC) {
         setTimeout(() => emitToClient(E.LOBBY_LIST_RESULT, { lobbies: FAKE_PUBLIC_LOBBIES }), 400);
       }

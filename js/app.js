@@ -90,11 +90,6 @@
       UI.applyPauseState(phase, paused, endsAt, remainingMs);
     });
 
-    JudgementSocket.on(E.LOBBY_CLOSED, ({ reason }) => {
-      alert('Il tribunale è stato chiuso (' + (reason || 'inattività') + '). Si torna alla home.');
-      location.reload();
-    });
-
     JudgementSocket.on(E.MATCH_STARTED, () => {
       UI.hideCountdown();
       UI.showView('trial');
@@ -143,21 +138,10 @@
       UI.showView('verdict');
     });
 
-    JudgementSocket.on(E.MATCH_ENDED, ({ matchNumber, scoreboard }) => {
-      UI.renderMatchEnd(matchNumber, scoreboard);
+    JudgementSocket.on(E.MATCH_ENDED, ({ matchNumber, scoreboard, endsAt }) => {
+      UI.renderMatchEnd(matchNumber, scoreboard, endsAt);
+      UI.setMatchEndStatus('La prossima partita parte in automatico. Se restate in pochi si torna in attesa di altri giocatori.');
       UI.showView('match-end');
-    });
-
-    JudgementSocket.on(E.REMATCH_VOTE_START, ({ endsAt }) => {
-      UI.showRematchVote(endsAt);
-      setRematchButtonsEnabled(true);
-    });
-
-    JudgementSocket.on(E.REMATCH_RESULT, ({ again, yes, no }) => {
-      UI.setRematchStatus(again
-        ? `Si continua! (${yes} sì, ${no} no)`
-        : `Niente rivincita (${yes} sì, ${no} no). Il tribunale chiuderà se resta inattivo.`);
-      setRematchButtonsEnabled(false);
     });
 
     JudgementSocket.on(E.ERROR, ({ message }) => UI.setHomeError(message));
@@ -178,7 +162,7 @@
       difesaSeconds: parseInt(document.getElementById('input-difesa-seconds').value, 10),
       votoSeconds: parseInt(document.getElementById('input-voto-seconds').value, 10),
       verdictSeconds: parseInt(document.getElementById('input-verdict-seconds').value, 10),
-      rematchVoteSeconds: parseInt(document.getElementById('input-rematch-seconds').value, 10),
+      matchEndSeconds: parseInt(document.getElementById('input-matchend-seconds').value, 10),
     });
   });
 
@@ -193,6 +177,9 @@
     JudgementSocket.emit(E.LOBBY_PAUSE_TOGGLE, {});
   });
   document.getElementById('btn-pause-verdict').addEventListener('click', () => {
+    JudgementSocket.emit(E.LOBBY_PAUSE_TOGGLE, {});
+  });
+  document.getElementById('btn-pause-matchend').addEventListener('click', () => {
     JudgementSocket.emit(E.LOBBY_PAUSE_TOGGLE, {});
   });
 
@@ -225,24 +212,7 @@
     UI.setVoteStatus('Voto registrato: ' + (decisione === 'assolvi' ? 'assolvi' : 'condanna') + '. In attesa degli altri.');
   }
 
-  // --- Fine partita: voto rivincita --------------------------------------------
-
-  function setRematchButtonsEnabled(enabled) {
-    document.getElementById('btn-rematch-yes').disabled = !enabled;
-    document.getElementById('btn-rematch-no').disabled = !enabled;
-  }
-
-  document.getElementById('btn-rematch-yes').addEventListener('click', () => {
-    JudgementSocket.emit(E.REMATCH_VOTE_CAST, { vote: true });
-    setRematchButtonsEnabled(false);
-    UI.setRematchStatus('Voto registrato: sì. In attesa degli altri...');
-  });
-
-  document.getElementById('btn-rematch-no').addEventListener('click', () => {
-    JudgementSocket.emit(E.REMATCH_VOTE_CAST, { vote: false });
-    setRematchButtonsEnabled(false);
-    UI.setRematchStatus('Voto registrato: no. In attesa degli altri...');
-  });
+  // --- Fine partita: si riparte in automatico, niente da fare qui -------------
 
   UI.showView('home');
 })();

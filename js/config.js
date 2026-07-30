@@ -19,7 +19,7 @@ const JUDGEMENT_CONFIG = {
     difesaSeconds: { def: 90, min: 20, max: 240, label: 'Tempo per scrivere la difesa' },
     votoSeconds: { def: 30, min: 10, max: 120, label: 'Tempo per votare' },
     verdictSeconds: { def: 8, min: 3, max: 10, label: 'Verdetto a schermo prima del round successivo' },
-    rematchVoteSeconds: { def: 20, min: 10, max: 90, label: 'Tempo per votare la rivincita' },
+    matchEndSeconds: { def: 10, min: 5, max: 20, label: 'Classifica a schermo prima della prossima partita' },
   },
 
   EVENTS: {
@@ -33,7 +33,6 @@ const JUDGEMENT_CONFIG = {
     ACCUSA_SUBMIT: 'accusa:submit',
     DIFESA_SUBMIT: 'difesa:submit',
     VOTO_CAST: 'voto:cast',
-    REMATCH_VOTE_CAST: 'rematch:vote_cast',
 
     // server -> client
     LOBBY_JOINED: 'lobby:joined',
@@ -43,7 +42,6 @@ const JUDGEMENT_CONFIG = {
     LOBBY_COUNTDOWN_START: 'lobby:countdown_start',
     LOBBY_COUNTDOWN_CANCEL: 'lobby:countdown_cancel',
     LOBBY_PAUSE_STATE: 'lobby:pause_state',
-    LOBBY_CLOSED: 'lobby:closed',
     MATCH_STARTED: 'match:started',
     ROUND_YOUR_TURN: 'round:your_turn',
     ROUND_WAITING: 'round:waiting',
@@ -53,8 +51,6 @@ const JUDGEMENT_CONFIG = {
     TRIAL_AI_JUDGING: 'trial:ai_judging',
     TRIAL_VERDICT: 'trial:verdict',
     MATCH_ENDED: 'match:ended',
-    REMATCH_VOTE_START: 'rematch:vote_start',
-    REMATCH_RESULT: 'rematch:result',
     ERROR: 'error',
   },
 };

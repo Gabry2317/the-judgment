@@ -48,7 +48,7 @@ const UI = (() => {
       document.getElementById('input-difesa-seconds').value = settings.difesaSeconds;
       document.getElementById('input-voto-seconds').value = settings.votoSeconds;
       document.getElementById('input-verdict-seconds').value = settings.verdictSeconds;
-      document.getElementById('input-rematch-seconds').value = settings.rematchVoteSeconds;
+      document.getElementById('input-matchend-seconds').value = settings.matchEndSeconds;
     } else {
       document.getElementById('lobby-settings-readonly').innerHTML =
         `Minimo <strong>${settings.minPlayers}</strong> giocatori, avvio dopo <strong>${settings.countdownSeconds}s</strong> di attesa.<br>
@@ -56,7 +56,7 @@ const UI = (() => {
          difesa <strong>${settings.difesaSeconds}s</strong> &middot;
          voto <strong>${settings.votoSeconds}s</strong> &middot;
          verdetto <strong>${settings.verdictSeconds}s</strong> &middot;
-         rivincita <strong>${settings.rematchVoteSeconds}s</strong>.`;
+         classifica <strong>${settings.matchEndSeconds}s</strong>.`;
     }
   }
 
@@ -88,7 +88,7 @@ const UI = (() => {
   setInterval(() => {
     tickTimerElement(document.getElementById('trial-timer'));
     tickTimerElement(document.getElementById('lobby-countdown-text'));
-    tickTimerElement(document.getElementById('rematch-timer'));
+    tickTimerElement(document.getElementById('matchend-timer'));
     tickTimerElement(document.getElementById('verdict-timer'));
   }, 500);
 
@@ -108,6 +108,7 @@ const UI = (() => {
     difesa: { timerEl: 'trial-timer', btnId: 'btn-pause-trial', bannerId: 'pause-banner' },
     voto: { timerEl: 'trial-timer', btnId: 'btn-pause-trial', bannerId: 'pause-banner' },
     verdetto: { timerEl: 'verdict-timer', btnId: 'btn-pause-verdict', bannerId: 'pause-banner-verdict' },
+    match_end: { timerEl: 'matchend-timer', btnId: 'btn-pause-matchend', bannerId: 'pause-banner-matchend' },
   };
 
   function setHostVisibilityForPauseButtons(isHost) {
@@ -254,7 +255,7 @@ const UI = (() => {
 
   // --- Fine partita: classifica e voto rivincita ----------------------------
 
-  function renderMatchEnd(matchNumber, scoreboard) {
+  function renderMatchEnd(matchNumber, scoreboard, endsAt) {
     document.getElementById('match-end-number').textContent = matchNumber;
     const table = document.getElementById('scoreboard-table');
     const totalMatches = Math.max(matchNumber, ...scoreboard.map(r => r.matches.length), 1);
@@ -274,19 +275,13 @@ const UI = (() => {
     html += '</tbody>';
     table.innerHTML = html;
 
-    document.getElementById('rematch-panel').classList.add('hidden');
-    document.getElementById('rematch-status').textContent = '';
+    document.getElementById('pause-banner-matchend').classList.add('hidden');
+    setMatchEndStatus('');
+    setTimerRunning(document.getElementById('matchend-timer'), endsAt);
   }
 
-  function showRematchVote(endsAt) {
-    const panel = document.getElementById('rematch-panel');
-    panel.classList.remove('hidden');
-    setTimerRunning(document.getElementById('rematch-timer'), endsAt);
-    document.getElementById('rematch-status').textContent = '';
-  }
-
-  function setRematchStatus(text) {
-    document.getElementById('rematch-status').textContent = text;
+  function setMatchEndStatus(text) {
+    document.getElementById('matchend-status').textContent = text;
   }
 
   function escapeHtml(str) {
@@ -301,6 +296,6 @@ const UI = (() => {
     setRoundLabel, showAccusaTurn, showAccusaWaiting,
     renderTrialAccusa, setPhase, showDifesaEvidence, setVotingTimer, clearTrialTimer,
     setVoteStatus, renderVerdict,
-    renderMatchEnd, showRematchVote, setRematchStatus,
+    renderMatchEnd, setMatchEndStatus,
   };
 })();
