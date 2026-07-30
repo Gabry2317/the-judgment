@@ -622,6 +622,21 @@ textarea { min-height: 118px; resize: vertical; line-height: 1.6; }
 @keyframes card-in { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
 .evidence-accusa { border-left-color: var(--red); }
 .evidence-difesa { border-left-color: var(--green); }
+.evidence-imprevisto, .evidence-giornalista { border-left-color: var(--gold, #c9a227); }
+.blank-input {
+  display: inline-block;
+  min-width: 8rem;
+  max-width: 100%;
+  padding: 0.1rem 0.4rem;
+  margin: 0 0.2rem;
+  font: inherit;
+  color: inherit;
+  background: rgba(0, 0, 0, 0.06);
+  border: none;
+  border-bottom: 2px dashed currentColor;
+  border-radius: 4px;
+}
+.blank-input:focus { outline: none; background: rgba(0, 0, 0, 0.12); }
 .evidence-ai { border-left-color: var(--gold); }
 
 .evidence-label {
