@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>The Judgement — il tribunale online tra amici</title>
 <meta name="description" content="The Judgement: crea un tribunale, accusa i tuoi amici, difenditi e lascia che la giuria (e il giudice AI) emettano il verdetto.">
-<meta name="theme-color" content="#f3efe4">
+<meta name="theme-color" content="#0d131f">
 <meta property="og:title" content="The Judgement — il tribunale online tra amici">
 <meta property="og:description" content="Accuse anonime, difese improbabili e un giudice AI: chi verrà assolto e chi condannato?">
 <meta property="og:type" content="website">
@@ -13,6 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="preload" as="image" href="assets/images/bg-courtroom.jpg">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -35,6 +36,10 @@
   <!-- VISTA: HOME / CONNESSIONE -->
   <section class="view" id="view-home" data-view="home">
     <div class="dossier">
+      <div class="hero-illustration hero-home">
+        <img src="assets/images/hero-gavel.png" alt="Martelletto del giudice e bilancia della giustizia" onerror="this.parentElement.style.display='none'">
+      </div>
+      <p class="tagline">Accusa i tuoi amici. Difenditi. Che la giuria decida.</p>
       <p class="dossier-label">Identificazione</p>
       <label class="field">
         <span>Il tuo nome</span>
