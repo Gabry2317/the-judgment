@@ -34,6 +34,7 @@ const JUDGEMENT_CONFIG = {
     ACCUSA_SUBMIT: 'accusa:submit',
     DIFESA_SUBMIT: 'difesa:submit',
     VOTO_CAST: 'voto:cast',
+    IMPREVISTO_GIORNALISTA_SUBMIT: 'imprevisto:giornalista_submit',
     REMATCH_CAST: 'rematch:cast',
 
     // server -> client
@@ -49,6 +50,9 @@ const JUDGEMENT_CONFIG = {
     ROUND_WAITING: 'round:waiting',
     TRIAL_STARTED: 'trial:started',
     TRIAL_DEFENSE_SUBMITTED: 'trial:defense_submitted',
+    TRIAL_IMPREVISTO_PENDING: 'trial:imprevisto_pending',
+    TRIAL_IMPREVISTO_REVEAL: 'trial:imprevisto_reveal',
+    TRIAL_IMPREVISTO_GIORNALISTA_TURN: 'trial:imprevisto_giornalista_turn',
     TRIAL_VOTING_PHASE: 'trial:voting_phase',
     TRIAL_AI_JUDGING: 'trial:ai_judging',
     TRIAL_VERDICT: 'trial:verdict',
