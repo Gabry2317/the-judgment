@@ -55,6 +55,44 @@ const JudgementSocket = (() => {
     });
   }
 
+  // Verifica rapidamente che il server HTTP sia raggiungibile (anche
+  // prima di aprire una connessione Socket.IO), usando l'endpoint /health.
+  // Ritorna una Promise che risolve sempre con: { online, latency, message, data?, error? }.
+  function checkServerStatus(serverUrl, timeoutMs = 5000) {
+    if (!serverUrl) {
+      return Promise.resolve({ online: true, latency: 0, message: 'Modalità demo locale' });
+    }
+    const url = serverUrl.replace(/\/$/, '') + '/health';
+    const start = performance.now();
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+    return fetch(url, { method: 'GET', cache: 'no-store', signal: controller.signal, mode: 'cors' })
+      .then(async (res) => {
+        clearTimeout(timer);
+        const latency = Math.round(performance.now() - start);
+        if (!res.ok) {
+          return { online: false, latency, message: 'Server non raggiungibile (HTTP ' + res.status + ')', error: 'HTTP ' + res.status };
+        }
+        const data = await res.json().catch(() => null);
+        return {
+          online: true,
+          latency,
+          message: (data && data.name ? data.name : 'Server') + ' online (' + latency + 'ms)',
+          data,
+        };
+      })
+      .catch((err) => {
+        clearTimeout(timer);
+        return {
+          online: false,
+          latency: 0,
+          message: 'Server non raggiungibile: ' + (err.message || 'errore di rete'),
+          error: err.message,
+        };
+      });
+  }
+
   // Richiede l'elenco delle lobby pubbliche attive (usata prima ancora di
   // essere entrati in una lobby, quindi passa da un canale a parte).
   function requestPublicLobbies({ serverUrl, onResult }) {
@@ -73,6 +111,7 @@ const JudgementSocket = (() => {
     });
   }
 
+
   function on(event, cb) {
     // in modalità mock il backend potrebbe non esistere ancora nel momento
     // in cui la UI registra i listener: mettiamo in coda finché non è pronto
@@ -87,5 +126,6 @@ const JudgementSocket = (() => {
   function getMode() { return mode; }
   function getMyId() { return myId; }
 
-  return { connect, on, emit, getMode, getMyId, requestPublicLobbies };
+  return { connect, on, emit, getMode, getMyId, requestPublicLobbies, checkServerStatus };
+
 })();
