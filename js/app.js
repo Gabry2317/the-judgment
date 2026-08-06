@@ -64,7 +64,39 @@
     if (!gameEventsBound) { bindGameEvents(); gameEventsBound = true; }
   }
 
+  // --- Controllo raggiungibilità server (prima della connessione) --------
+
+  let lastServerUrlChecked = '';
+  async function refreshServerStatus() {
+    const serverUrl = document.getElementById('input-server-url').value.trim();
+    const btn = document.getElementById('btn-check-server');
+    if (btn) { btn.disabled = true; btn.textContent = 'Verifico...'; }
+    UI.setServerStatus({ online: true, message: 'Verifica server in corso...' });
+
+    try {
+      const status = await JudgementSocket.checkServerStatus(serverUrl || null, 5000);
+      UI.setServerStatus(status);
+      lastServerUrlChecked = serverUrl;
+    } catch (err) {
+      UI.setServerStatus({ online: false, message: 'Errore durante il controllo: ' + err.message });
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = 'Verifica server'; }
+    }
+  }
+
+  document.getElementById('btn-check-server').addEventListener('click', refreshServerStatus);
+
+  // Verifica una volta subito, e di nuovo dopo un attimo per catturare
+  // l'indirizzo scoperto automaticamente da server-discovery.js.
+  refreshServerStatus();
+  setTimeout(() => {
+    if (document.getElementById('input-server-url').value.trim() !== lastServerUrlChecked) {
+      refreshServerStatus();
+    }
+  }, 1500);
+
   // --- Eventi di gioco (validi sia in modalità reale che demo) -------------
+
 
   function bindGameEvents() {
     JudgementSocket.on(E.LOBBY_JOINED, ({ code, players }) => {
