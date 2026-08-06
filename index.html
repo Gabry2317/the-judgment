@@ -49,6 +49,13 @@
       </label>
       <input type="hidden" id="input-server-url">
 
+      <div class="server-status-row">
+        <span class="server-status-badge" id="server-status-badge" aria-label="Stato del server"></span>
+        <span class="server-status-text" id="server-status-text">Verifica in corso...</span>
+        <button type="button" class="btn btn-secondary btn-small" id="btn-check-server">Verifica server</button>
+      </div>
+
+
       <div class="tab-switch" role="tablist">
         <button class="tab-btn active" id="tab-btn-create" data-tab="create">Crea tribunale</button>
         <button class="tab-btn" id="tab-btn-join" data-tab="join">Entra in un tribunale</button>
