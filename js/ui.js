@@ -12,9 +12,19 @@ const UI = (() => {
     document.getElementById('connection-status').textContent = text;
   }
 
+  function setServerStatus(status) {
+    const badge = document.getElementById('server-status-badge');
+    const text = document.getElementById('server-status-text');
+    if (!badge || !text) return;
+    badge.classList.toggle('online', status.online === true);
+    badge.classList.toggle('offline', status.online !== true);
+    text.textContent = status.message || 'Stato server sconosciuto';
+  }
+
   function setHomeError(msg) {
     document.getElementById('home-error').textContent = msg || '';
   }
+
 
   function renderPlayerList(players) {
     const list = document.getElementById('player-list');
@@ -392,7 +402,7 @@ const UI = (() => {
   }
 
   return {
-    showView, setConnectionStatus, setHomeError, renderLobby, renderPlayerList, renderPublicLobbies,
+    showView, setConnectionStatus, setServerStatus, setHomeError, renderLobby, renderPlayerList, renderPublicLobbies,
     renderLobbySettings, showCountdown, hideCountdown, setHostVisibilityForPauseButtons, applyPauseState,
     setRoundLabel, showAccusaTurn, showAccusaWaiting,
     renderTrialAccusa, setPhase, showDifesaEvidence, setVotingTimer, clearTrialTimer,
@@ -401,4 +411,5 @@ const UI = (() => {
     renderMatchEnd, setMatchEndStatus,
     renderRematchVote, setRematchStatus, setRematchButtonsEnabled,
   };
+
 })();
