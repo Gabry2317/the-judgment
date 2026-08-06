@@ -152,6 +152,13 @@
       UI.showDifesaEvidence(difesa);
     });
 
+    JudgementSocket.on(E.TRIAL_IMPREVISTO_FOTO_PRELOAD, ({ imageUrl }) => {
+      // Scarica l'immagine in background, senza mostrarla: quando arriverà
+      // la vera rivelazione (TRIAL_IMPREVISTO_REVEAL) sarà già in cache e
+      // comparirà istantaneamente, senza caricamento visibile.
+      UI.preloadImage(imageUrl);
+    });
+
     JudgementSocket.on(E.TRIAL_IMPREVISTO_PENDING, ({ tipo, autore, endsAt }) => {
       UI.setPhase('imprevisto-attesa');
       UI.showImprevistoWaiting(tipo, autore);

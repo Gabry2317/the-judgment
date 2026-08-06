@@ -664,6 +664,26 @@ textarea { min-height: 118px; resize: vertical; line-height: 1.6; }
 }
 .evidence-photo.hidden { display: none; }
 
+.evidence-photo-censored {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  width: 100%;
+  max-width: 320px;
+  aspect-ratio: 1 / 1;
+  margin: 0 auto 12px;
+  border-radius: var(--radius-md, 6px);
+  border: 1px dashed var(--paper-line);
+  background: repeating-linear-gradient(135deg, #1a1a1a, #1a1a1a 10px, #232323 10px, #232323 20px);
+  color: #eee;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  padding: 16px;
+}
+.evidence-photo-censored.hidden { display: none; }
+
 /* ------------------------------------------------------------------ */
 /* Verdetto                                                            */
 /* ------------------------------------------------------------------ */

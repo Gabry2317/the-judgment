@@ -207,6 +207,14 @@ const UI = (() => {
 
   // --- Imprevisti ----------------------------------------------------------
 
+  // Scarica un'immagine in background senza mostrarla, per riempire la cache
+  // del browser prima che serva davvero (vedi TRIAL_IMPREVISTO_FOTO_PRELOAD).
+  function preloadImage(url) {
+    if (!url) return;
+    const img = new Image();
+    img.src = url;
+  }
+
   function showImprevistoWaiting(tipo, autore) {
     const el = document.getElementById('imprevisto-waiting-text');
     const dots = '<span class="dots"><span>.</span><span>.</span><span>.</span></span>';
@@ -239,7 +247,7 @@ const UI = (() => {
     return [...document.querySelectorAll('#giornalista-template .blank-input')].map(i => i.value);
   }
 
-  function showImprevistoEvidence({ tipo, testo, autore, imageUrl }) {
+  function showImprevistoEvidence({ tipo, testo, autore, imageUrl, censored }) {
     const card = document.getElementById('evidence-imprevisto-card');
     card.classList.remove('hidden');
     document.getElementById('imprevisto-label').textContent = tipo === 'foto'
@@ -248,12 +256,19 @@ const UI = (() => {
     document.getElementById('imprevisto-text').textContent = testo || '-';
 
     const img = document.getElementById('imprevisto-image');
-    if (tipo === 'foto' && imageUrl) {
+    const censoredEl = document.getElementById('imprevisto-image-censored');
+    if (tipo === 'foto' && censored) {
+      img.removeAttribute('src');
+      img.classList.add('hidden');
+      censoredEl.classList.remove('hidden');
+    } else if (tipo === 'foto' && imageUrl) {
       img.src = imageUrl;
       img.classList.remove('hidden');
+      censoredEl.classList.add('hidden');
     } else {
       img.removeAttribute('src');
       img.classList.add('hidden');
+      censoredEl.classList.add('hidden');
     }
   }
 
@@ -271,12 +286,19 @@ const UI = (() => {
     document.getElementById('recap-imprevisto-text').textContent = imprevisto.testo;
 
     const img = document.getElementById('recap-imprevisto-image');
-    if (imprevisto.tipo === 'foto' && imprevisto.imageUrl) {
+    const censoredEl = document.getElementById('recap-imprevisto-image-censored');
+    if (imprevisto.tipo === 'foto' && imprevisto.censored) {
+      img.removeAttribute('src');
+      img.classList.add('hidden');
+      censoredEl.classList.remove('hidden');
+    } else if (imprevisto.tipo === 'foto' && imprevisto.imageUrl) {
       img.src = imprevisto.imageUrl;
       img.classList.remove('hidden');
+      censoredEl.classList.add('hidden');
     } else {
       img.removeAttribute('src');
       img.classList.add('hidden');
+      censoredEl.classList.add('hidden');
     }
   }
 
@@ -424,7 +446,7 @@ const UI = (() => {
     renderLobbySettings, showCountdown, hideCountdown, setHostVisibilityForPauseButtons, applyPauseState,
     setRoundLabel, showAccusaTurn, showAccusaWaiting,
     renderTrialAccusa, setPhase, showDifesaEvidence, setVotingTimer, clearTrialTimer,
-    showImprevistoWaiting, renderGiornalistaTemplate, readGiornalistaBlanks, showImprevistoEvidence,
+    showImprevistoWaiting, renderGiornalistaTemplate, readGiornalistaBlanks, showImprevistoEvidence, preloadImage,
     setVoteStatus, renderVerdict,
     renderMatchEnd, setMatchEndStatus,
     renderRematchVote, setRematchStatus, setRematchButtonsEnabled,

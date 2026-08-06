@@ -51,6 +51,7 @@ const JUDGEMENT_CONFIG = {
     TRIAL_STARTED: 'trial:started',
     TRIAL_DEFENSE_SUBMITTED: 'trial:defense_submitted',
     TRIAL_IMPREVISTO_PENDING: 'trial:imprevisto_pending',
+    TRIAL_IMPREVISTO_FOTO_PRELOAD: 'trial:imprevisto_foto_preload',
     TRIAL_IMPREVISTO_REVEAL: 'trial:imprevisto_reveal',
     TRIAL_IMPREVISTO_GIORNALISTA_TURN: 'trial:imprevisto_giornalista_turn',
     TRIAL_VOTING_PHASE: 'trial:voting_phase',
