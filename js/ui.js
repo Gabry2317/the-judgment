@@ -239,13 +239,22 @@ const UI = (() => {
     return [...document.querySelectorAll('#giornalista-template .blank-input')].map(i => i.value);
   }
 
-  function showImprevistoEvidence({ tipo, testo, autore }) {
+  function showImprevistoEvidence({ tipo, testo, autore, imageUrl }) {
     const card = document.getElementById('evidence-imprevisto-card');
     card.classList.remove('hidden');
     document.getElementById('imprevisto-label').textContent = tipo === 'foto'
       ? '📷 Foto agli atti (descritta da Lia)'
       : `📰 Titolo di giornale${autore ? ' — cronista: ' + autore : ''}`;
     document.getElementById('imprevisto-text').textContent = testo || '-';
+
+    const img = document.getElementById('imprevisto-image');
+    if (tipo === 'foto' && imageUrl) {
+      img.src = imageUrl;
+      img.classList.remove('hidden');
+    } else {
+      img.removeAttribute('src');
+      img.classList.add('hidden');
+    }
   }
 
   function renderRecapImprevisto(imprevisto) {
@@ -260,6 +269,15 @@ const UI = (() => {
       ? '📷 Imprevisto: foto agli atti (Lia)'
       : `📰 Imprevisto: titolo di giornale${imprevisto.autore ? ' — ' + imprevisto.autore : ''}`;
     document.getElementById('recap-imprevisto-text').textContent = imprevisto.testo;
+
+    const img = document.getElementById('recap-imprevisto-image');
+    if (imprevisto.tipo === 'foto' && imprevisto.imageUrl) {
+      img.src = imprevisto.imageUrl;
+      img.classList.remove('hidden');
+    } else {
+      img.removeAttribute('src');
+      img.classList.add('hidden');
+    }
   }
 
   function setVotingTimer(endsAt) {
