@@ -879,3 +879,9 @@ textarea { min-height: 118px; resize: vertical; line-height: 1.6; }
 }
 .btn-small { font-size: 12px; padding: 8px 12px; min-height: 0; }
 
+
+/* Messaggio di errore del cronista (spazi vuoti non compilati) */
+.error-hint {
+  color: #ff8080;
+  font-weight: 600;
+}
