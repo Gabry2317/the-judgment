@@ -168,6 +168,7 @@
     JudgementSocket.on(E.TRIAL_IMPREVISTO_GIORNALISTA_TURN, ({ parts, endsAt }) => {
       UI.renderGiornalistaTemplate(parts);
       UI.setPhase('imprevisto-giornalista');
+      UI.setGiornalistaError('');
       setGiornalistaButtonEnabled(true);
       if (endsAt) UI.setVotingTimer(endsAt);
     });
@@ -221,12 +222,7 @@
   }
 
   function setVoteButtonsEnabled(enabled) {
-    document.getElementById('btn-submit-giornalista').addEventListener('click', () => {
-    setGiornalistaButtonEnabled(false);
-    JudgementSocket.emit(E.IMPREVISTO_GIORNALISTA_SUBMIT, { blanks: UI.readGiornalistaBlanks() });
-  });
-
-  document.getElementById('btn-vote-assolvi').disabled = !enabled;
+    document.getElementById('btn-vote-assolvi').disabled = !enabled;
     document.getElementById('btn-vote-condanna').disabled = !enabled;
   }
 
@@ -280,6 +276,20 @@
   function setGiornalistaButtonEnabled(enabled) {
     document.getElementById('btn-submit-giornalista').disabled = !enabled;
   }
+
+  // Pubblicazione del titolo del cronista: il listener va registrato UNA volta
+  // sola al caricamento (prima era annidato dentro setVoteButtonsEnabled, cosi'
+  // il pulsante non funzionava fino alla fase di voto).
+  document.getElementById('btn-submit-giornalista').addEventListener('click', () => {
+    const blanks = UI.readGiornalistaBlanks();
+    if (!blanks.some((b) => String(b || '').trim())) {
+      UI.setGiornalistaError('Riempi almeno uno spazio prima di mandare in stampa.');
+      return;
+    }
+    UI.setGiornalistaError('');
+    setGiornalistaButtonEnabled(false);
+    JudgementSocket.emit(E.IMPREVISTO_GIORNALISTA_SUBMIT, { blanks });
+  });
 
   document.getElementById('btn-submit-difesa').addEventListener('click', () => {
     const text = document.getElementById('input-difesa').value.trim();
