@@ -243,6 +243,13 @@ const UI = (() => {
     });
   }
 
+  function setGiornalistaError(message) {
+    const el = document.getElementById('giornalista-error');
+    if (!el) return;
+    el.textContent = message || '';
+    el.classList.toggle('hidden', !message);
+  }
+
   function readGiornalistaBlanks() {
     return [...document.querySelectorAll('#giornalista-template .blank-input')].map(i => i.value);
   }
@@ -446,7 +453,7 @@ const UI = (() => {
     renderLobbySettings, showCountdown, hideCountdown, setHostVisibilityForPauseButtons, applyPauseState,
     setRoundLabel, showAccusaTurn, showAccusaWaiting,
     renderTrialAccusa, setPhase, showDifesaEvidence, setVotingTimer, clearTrialTimer,
-    showImprevistoWaiting, renderGiornalistaTemplate, readGiornalistaBlanks, showImprevistoEvidence, preloadImage,
+    showImprevistoWaiting, renderGiornalistaTemplate, readGiornalistaBlanks, setGiornalistaError, showImprevistoEvidence, preloadImage,
     setVoteStatus, renderVerdict,
     renderMatchEnd, setMatchEndStatus,
     renderRematchVote, setRematchStatus, setRematchButtonsEnabled,
