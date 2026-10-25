@@ -60,6 +60,10 @@ const JUDGEMENT_CONFIG = {
     MATCH_ENDED: 'match:ended',
     REMATCH_PHASE: 'match:rematch_phase',
     LOBBY_RETURN: 'lobby:return',
+    // Foto-prova generata da UN solo client (il più veloce a rispondere al ping)
+    NET_PING: 'net:ping',
+    TRIAL_FOTO_GENERATE: 'trial:foto_generate',
+    TRIAL_FOTO_RESULT: 'trial:foto_result',
     ERROR: 'error',
   },
 };

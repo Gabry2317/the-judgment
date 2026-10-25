@@ -52,3 +52,11 @@ backend e passa `esitoFinale` già pronto dentro l'evento `trial:verdict`.
   campo "server" — nessuna modifica al codice necessaria.
 - Aggiungere autenticazione/anti-spam sul deposito accuse quando il backend è pronto.
 - Persistenza dello storico processi (facoltativa) per una vista "archivio casi".
+
+## Foto-prova generata con Perchance
+
+Il giocatore con il ping più basso (scelto dal server) genera l'immagine nel proprio
+browser tramite `js/perchance.js` e ne manda l'URL al server, che lo gira a tutti.
+`js/perchance.js` è **da verificare con il servizio reale**: vedi il commento in cima
+al file. Prova dalla console del browser:
+`PerchanceImage.generate({ prompt: 'a red teapot' }).then(console.log)`.

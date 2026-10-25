@@ -51,6 +51,21 @@ const JudgementSocket = (() => {
         else socket.emit(E.LOBBY_CREATE, { nickname, pubblica: !!pubblica });
       });
       socket.on('connect_error', () => onStatusChange('errore di connessione'));
+
+      // Foto-prova: il server misura il ping con questo "ping applicativo" (il
+      // primo che risponde è il più veloce) e al più veloce chiede di generare
+      // l'immagine con Perchance; l'URL torna al server, che lo manda a tutti.
+      PerchanceImage.warmUp();
+      socket.on(JUDGEMENT_CONFIG.EVENTS.NET_PING, (ack) => { if (typeof ack === 'function') ack(); });
+      socket.on(JUDGEMENT_CONFIG.EVENTS.TRIAL_FOTO_GENERATE, ({ token, prompt, negativePrompt, seed }) => {
+        const E = JUDGEMENT_CONFIG.EVENTS;
+        PerchanceImage.generate({ prompt, negativePrompt, seed })
+          .then((imageUrl) => socket.emit(E.TRIAL_FOTO_RESULT, { token, imageUrl }))
+          .catch((err) => {
+            console.warn('[perchance] generazione fallita:', err.message);
+            socket.emit(E.TRIAL_FOTO_RESULT, { token, failed: true });
+          });
+      });
       socket.on('disconnect', () => onStatusChange('disconnesso'));
     });
   }
