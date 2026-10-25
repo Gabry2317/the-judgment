@@ -3,13 +3,14 @@
 // Node.js/Socket.IO: se cambi un nome evento, cambialo in entrambi i posti.
 
 const JUDGEMENT_CONFIG = {
-  DEFAULT_SERVER_URL: '', // vuoto = modalità demo locale (nessun server richiesto)
+  // Indirizzo fisso del server (Tailscale Funnel, porta 8443). Vuoto = modalità
+  // demo locale. Il campo "server" nell'interfaccia resta nascosto: si
+  // precompila da solo con questo valore (vedi server-discovery.js).
+  DEFAULT_SERVER_URL: 'https://nas.tail16ace7.ts.net:8443',
 
-  // Se il tuo server Debian pubblica il proprio indirizzo su un Gist GitHub
-  // (vedi backend/kitab/README.md, sezione Cloudflare Tunnel), incolla qui
-  // l'URL "raw" del file: il campo "server" (nascosto) si precompila da solo
-  // all'avvio, senza che chi gioca debba mai vederlo o toccarlo.
-  SERVER_DISCOVERY_URL: 'https://gist.githubusercontent.com/Gabry2317/c258d2718dff7c3ede0290111efe0984/raw/judgement-server.json',
+  // Non serve più: con Funnel l'indirizzo non cambia, quindi niente Gist.
+  // Lascia vuoto (se lo imposti, ha la precedenza su DEFAULT_SERVER_URL).
+  SERVER_DISCOVERY_URL: '',
 
   // Valori di default e limiti (min/max) delle impostazioni configurabili
   // dall'host — devono restare identici a TIMER_SETTINGS in backend/src/config.js

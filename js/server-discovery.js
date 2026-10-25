@@ -21,6 +21,9 @@
     return;
   }
 
+  // Indirizzo fisso (Funnel): nessuna scoperta via Gist necessaria.
+  if (JUDGEMENT_CONFIG.DEFAULT_SERVER_URL) input.value = JUDGEMENT_CONFIG.DEFAULT_SERVER_URL;
+
   const url = JUDGEMENT_CONFIG.SERVER_DISCOVERY_URL;
   if (!url) return;
 
