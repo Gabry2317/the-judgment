@@ -38,7 +38,7 @@ const JudgementSocket = (() => {
         return;
       }
       mode = 'real';
-      const socket = window.io(serverUrl, { transports: ['polling', 'websocket'], reconnectionAttempts: 3 });
+      const socket = window.io(serverUrl, { transports: ['websocket', 'polling'], reconnectionAttempts: 3 });
       backend = {
         on: (event, cb) => socket.on(event, cb),
         emit: (event, payload) => socket.emit(event, payload),
@@ -56,6 +56,7 @@ const JudgementSocket = (() => {
       // primo che risponde è il più veloce) e al più veloce chiede di generare
       // l'immagine con Perchance; l'URL torna al server, che lo manda a tutti.
       PerchanceImage.warmUp();
+      socket.on(JUDGEMENT_CONFIG.EVENTS.TRIAL_FOTO_PREPARE, () => PerchanceImage.warmUp(true));
       socket.on(JUDGEMENT_CONFIG.EVENTS.NET_PING, (ack) => { if (typeof ack === 'function') ack(); });
       socket.on(JUDGEMENT_CONFIG.EVENTS.TRIAL_FOTO_GENERATE, ({ token, prompt, negativePrompt, seed }) => {
         const E = JUDGEMENT_CONFIG.EVENTS;

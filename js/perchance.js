@@ -22,7 +22,7 @@ const PerchanceImage = (() => {
   const API_URL = 'https://perchance.org/perchance-ai-api'; // alternativa: https://null.perchance.org/perchance-ai-api
   const WARMUP_URL = 'https://perchance.org';
   const PARAMS = { prompt: 'prompt', negativePrompt: 'negativePrompt', seed: 'seed', id: 'id' };
-  let warmed = false;
+  let warmedAt = 0;
 
   function hiddenIframe(src) {
     const f = document.createElement('iframe');
@@ -34,9 +34,12 @@ const PerchanceImage = (() => {
   }
 
   // Da chiamare presto (es. alla connessione): apre Perchance una volta per sessione.
-  function warmUp() {
-    if (warmed) return;
-    warmed = true;
+  // `force`: richiamalo quando il server ti sceglie come generatore, così
+  // la verifica anti-bot è fresca (si rifà al massimo ogni 10 minuti).
+  function warmUp(force) {
+    const now = Date.now();
+    if (warmedAt && now - warmedAt < (force ? 2 * 60 * 1000 : 10 * 60 * 1000)) return;
+    warmedAt = now;
     const f = hiddenIframe(WARMUP_URL);
     setTimeout(() => f.remove(), 15000);
   }

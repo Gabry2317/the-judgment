@@ -63,6 +63,7 @@ const JUDGEMENT_CONFIG = {
     LOBBY_RETURN: 'lobby:return',
     // Foto-prova generata da UN solo client (il più veloce a rispondere al ping)
     NET_PING: 'net:ping',
+    TRIAL_FOTO_PREPARE: 'trial:foto_prepare',
     TRIAL_FOTO_GENERATE: 'trial:foto_generate',
     TRIAL_FOTO_RESULT: 'trial:foto_result',
     ERROR: 'error',
